@@ -1,5 +1,5 @@
-import os
-import pygame
+#import os
+#import pygame
 from math import tan, radians, degrees, copysign, sqrt
 import time
 
