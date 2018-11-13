@@ -143,4 +143,4 @@ while 1 < 2:
     car1.update()
     if (i % 100) == 0:  # skips showing some update routines - better overview
         print(car1.status())
-        print(test)
+print('test')
