@@ -1,4 +1,4 @@
-# import os
+#import os
 # import pygame
 from math import tan, radians, degrees, copysign, sqrt
 import time
@@ -110,9 +110,22 @@ class God:
     # use (instance of CarFree2D).set_destination(x,y) to push data to each car
     # maybe: create a log file (CSV Data to copy it to excel etc to show graphs of velocity, acceleration, etc)...
     # ...for presentation
-    pass
-
-
+    #current_dir = os.path.dirname(os.path.abspath(__file__))
+    #file_path = os.path.join(current_dir, "path.txt")
+    #path_file = pygame.image.load(image_path)
+    fileToBeRead = open("path.txt", "r")
+    xCoord = 0.0
+    yCoord = 0.0
+    timestamp = 0 #milliseconds
+    destination = False
+    for line in fileToBeRead:
+        xCoord = line.split(',')[0]
+        yCoord = line.split(',')[1]
+        timestamp = line.split(',')[2]
+        destination = line.split(',')[3]
+        #print(xCoord,yCoord,timestamp,destination)
+        p = Point(xCoord,yCoord,timestamp,destination)
+        
 class SpaceSimulation2D:
     def __init__(self, y, x):
         self.high = y
