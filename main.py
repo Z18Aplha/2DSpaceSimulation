@@ -113,18 +113,20 @@ class God:
     #current_dir = os.path.dirname(os.path.abspath(__file__))
     #file_path = os.path.join(current_dir, "path.txt")
     #path_file = pygame.image.load(image_path)
-    fileToBeRead = open("path.txt", "r")
-    xCoord = 0.0
-    yCoord = 0.0
-    timestamp = 0 #milliseconds
-    destination = False
-    for line in fileToBeRead:
-        xCoord = line.split(',')[0]
-        yCoord = line.split(',')[1]
-        timestamp = line.split(',')[2]
-        destination = line.split(',')[3]
-        #print(xCoord,yCoord,timestamp,destination)
-        p = Point(xCoord,yCoord,timestamp,destination)
+    def file_read(self):
+        fileToBeRead = open("path.txt", "r")
+        xCoord = 0.0
+        yCoord = 0.0
+        timestamp = 0 #milliseconds
+        destination = False
+        for line in fileToBeRead:
+            xCoord = line.split(',')[0]
+            yCoord = line.split(',')[1]
+            timestamp = line.split(',')[2]
+            destination = line.split(',')[3]
+            #print(xCoord,yCoord,timestamp,destination)
+            car1 = CarFree2D(0, 0)
+            car1.set_destination(10, 10, time.time() + 10)
         
 class SpaceSimulation2D:
     def __init__(self, y, x):
@@ -230,9 +232,8 @@ class CarFree2D:
 
 # TESTING ROUTINE
 
-
-car1 = CarFree2D(0, 0)
-car1.set_destination(10, 10, time.time() + 10)
+g= God()
+g.file_read()
 i = 0
 while 1 < 2:
     i = i + 1
