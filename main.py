@@ -28,11 +28,11 @@ def start_simulation():
         ay.append(data[-2])
     #plt.plot(t, ax)
     #plt.plot(t, ay)
-    #plt.plot(t, sx)
-    #plt.plot(t, sy)
+    plt.plot(t, sx)
+    plt.plot(t, sy)
     #plt.plot(sx, sy)
-    plt.plot(t, vx)
-    plt.plot(t, vy)
+    #plt.plot(t, vx)
+    #plt.plot(t, vy)
     plt.show()
 
 
