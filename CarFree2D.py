@@ -1,18 +1,26 @@
+from Controller import Controller
+from Path import Path
+from math import sqrt
+from Point import Point
+from Polynomial import Polynomial
+
+
 class CarFree2D:
-    def __init__(self, x: float, y: float):
+    def __init__(self, x: float, y: float, identy: int):
         # PROPERTIES
-        self.position = [x, y]  # in m - later: instantiation of 2d space with dates in metres
+        self.id = identy
+        self.spawn = [x, y]
+        self.position = []  # in m - later: instantiation of 2d space with dates in metres
         self.length = 400  # [length] = cm
         self.width = 200  # [width] = cm
-        self.timestamp = time.time()  # current time in UNIX
         # VELOCITY (m/s)
-        self.velocity = [0.0, 0.0]
+        self.velocity = []
         self.max_velocity = [50.0, 10.0]  # [vx, vy]
         # ACCELERATION (DE-) (m/s^2)
-        self.acceleration = [0.0, 0.0]  # [ax, ay]
+        self.acceleration = []  # [ax, ay]
         self.max_acceleration = [30.0, 15.0]  # [ax, ay]
         # PATH
-        self.path = Path(self.position, self.timestamp)
+        self.path = Path(self.spawn)
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity)
 
     # GETTER
@@ -28,59 +36,97 @@ class CarFree2D:
     def get_acceleration(self):
         return self.acceleration
 
-    def status(self):
-        return [self.position[0], self.position[1], self.velocity[0],
-                self.velocity[1], self.acceleration[0], self.acceleration[1], time.time()]  # experimental, maybe further advantages?
+    def status(self, t):
+
+        # INITIALIZATION
+        ax = 0
+        ay = 0
+        vx = 0
+        vy = 0
+        sx = self.spawn[0]
+        sy = self.spawn[1]
+
+        # ACCELERATION
+        t_old = 0
+        for control in self.controller.controls:
+            if control[2] <= t:
+                t_old = control[2]
+                dt = t - t_old
+                ax = control[0].get_value(dt)
+                ay = control[1].get_value(dt)
+
+
+        # VELOCITY
+        t_old = 0
+        for velocity in self.velocity:
+            if velocity[2] <= t:
+                t_old = velocity[2]
+                dt = t - t_old
+                vx = velocity[0].get_value(dt)
+                vy = velocity[1].get_value(dt)
+
+
+        # POSITION
+        t_old = 0
+        for position in self.position:
+            if position[2] <= t:
+                t_old = position[2]
+                dt = t - t_old
+                sx = position[0].get_value(dt)
+                sy = position[1].get_value(dt)
+
+
+        return [self.id, t, sx, sy, vx, vy, ax, ay]
 
     # SETTER
-    def set_acceleration(self, ax: float, ay: float):
-        # CHECK RANGE
-        ax = max(-self.max_acceleration[0], min(ax, self.max_acceleration[0]))
-        ay = max(-self.max_acceleration[1], min(ay, self.max_acceleration[1]))
-        self.acceleration = [ax, ay]
+    #    def set_acceleration(self, ax: float, ay: float):
+    #        # CHECK RANGE
+    #        ax = max(-self.max_acceleration[0], min(ax, self.max_acceleration[0]))
+    #        ay = max(-self.max_acceleration[1], min(ay, self.max_acceleration[1]))
+    #        self.acceleration = [ax, ay]
 
-    def set_velocity(self, vx: float, vy: float):
-        # CHECK RANGE
-        vx = max(-self.max_velocity[0], min(vx, self.max_velocity[0]))
-        vy = max(-self.max_velocity[1], min(vy, self.max_velocity[1]))
-        self.velocity = [vx, vy]
+    #    def set_velocity(self, vx: float, vy: float):
+    #        # CHECK RANGE
+    #        vx = max(-self.max_velocity[0], min(vx, self.max_velocity[0]))
+    #        vy = max(-self.max_velocity[1], min(vy, self.max_velocity[1]))
+    #        self.velocity = [vx, vy]
 
     def set_destination(self, x, y, t):
         p = Point(x, y, t, True)
+
         if self.controller.check_possibility(self.path.points[-1], p):
             self.path.add(p)
-            if self.path.points[-2].time > time.time():
-                self.controller.create_path(self.path.points[-2], p)
-            else:
-                p_now = Point(self.position[0], self.position[1], time.time(), True)
-                self.controller.create_path(p_now, p)
+            self.controller.create_path(self.path.points[-2], p)
         else:
-            print("The point (" + p.x + "|" + p.y + ") is to far away. Skipped.")
+            print("The point (" + str(p.x) + "|" + str(p.y) + ") is to far away. Skipped.")
 
     # SIMULATION
     def update(self):
 
-        dt = (time.time() - self.timestamp)  # [dt] = seconds
-        self.timestamp = time.time()
-
-        # ACCELERATION
-        found = False
-        for control in self.controller.controls:
-            if not found and control[2] > self.timestamp: #and not (control[0] == self.acceleration[0] and control[1] == self.acceleration[1]):
-                # found a new acceleration input
-                found = True
-            elif not found:
-                ax = control[0]
-                ay = control[1]
-
-        self.set_acceleration(ax, ay)
-
         # VELOCITY
-        vx = self.velocity[0] + dt * self.acceleration[0]
-        vy = self.velocity[1] + dt * self.acceleration[1]
-        self.set_velocity(vx, vy)
+        vx = Polynomial(0, 0, 0)
+        vy = Polynomial(0, 0, 0)
+        t_old = 0
+        velocity_x_old = 0
+        velocity_y_old = 0
+        for control in self.controller.controls:
+            dt = control[2] - t_old
+            velocity_x_old = vx.get_value(dt)
+            velocity_y_old = vy.get_value(dt)
+            vx = control[0].integration().add_constant(velocity_x_old)
+            vy = control[1].integration().add_constant(velocity_y_old)
+            t_old = control[2]
+            self.velocity.append([vx, vy, control[2]])
 
         # POSITION
-        x = self.position[0] + dt * self.velocity[0]
-        y = self.position[1] + dt * self.velocity[1]
-        self.position = [x, y]
+        sx = Polynomial(0, 0, self.spawn[0])
+        sy = Polynomial(0, 0, self.spawn[1])
+        t_old = 0
+        for function in self.velocity:
+            dt = function[2] - t_old
+            sx_old = sx.get_value(dt)
+            sy_old = sy.get_value(dt)
+            sx = function[0].integration().add_constant(sx_old)
+            sy = function[1].integration().add_constant(sy_old)
+            t_old = function[2]
+            self.position.append([sx, sy, function[2]])

@@ -1,16 +1,41 @@
-#import os
+# import os
 # import pygame
-from math import tan, radians, degrees, copysign, sqrt
 import time
-import Controller
 from God import God
+import matplotlib.pyplot as plt
 
-g= God()
-g.file_read()
-i = 0
-while 1 < 2:
-    i = i + 1
-    car1.update()
-    if (i % 10000) == 0:  # skips showing some update routines - better overview
-        #print(car1.status())
-        print(time.time(), car1.position[0], car1.position[1], car1.acceleration[0], car1.acceleration[1])
+
+def start_simulation():
+    g = God()
+    g.file_read()
+    g.calculate(18)
+
+    ax = []
+    ay = []
+    sx = []
+    sy = []
+    vx = []
+    vy = []
+    t = []
+    for data in g.calculation:
+        print(data)
+        t.append(data[1])
+        sx.append(data[2])
+        sy.append(data[3])
+        vx.append(data[4])
+        vy.append(data[5])
+        ax.append(data[-1])
+        ay.append(data[-2])
+    #plt.plot(t, ax)
+    #plt.plot(t, ay)
+    #plt.plot(t, sx)
+    #plt.plot(t, sy)
+    #plt.plot(sx, sy)
+    plt.plot(t, vx)
+    plt.plot(t, vy)
+    plt.show()
+
+
+
+if __name__ == "__main__":
+    start_simulation()
