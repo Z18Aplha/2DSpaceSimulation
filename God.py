@@ -26,9 +26,9 @@ class God:
         destination = True
         for line in fileToBeRead:
             car_id = int(line.split(',')[0])
-            x = float(line.split(',')[1])
-            y = float(line.split(',')[2])
-            timestamp = float(line.split(',')[3])
+            timestamp = float(line.split(',')[1])
+            x = float(line.split(',')[2])
+            y = float(line.split(',')[3])
             destination = bool(line.split(',')[4])
             # print(xCoord,yCoord,timestamp,destination)
             # self.cars.append())

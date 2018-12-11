@@ -8,11 +8,12 @@ from Polynomial import Polynomial
 class CarFree2D:
     def __init__(self, x: float, y: float, identy: int):
         # PROPERTIES
+        self.color = "#00FF00"
         self.id = identy
         self.spawn = [x, y]
         self.position = []  # in m - later: instantiation of 2d space with dates in metres
-        self.length = 400  # [length] = cm
-        self.width = 200  # [width] = cm
+        self.length = 4  # [length] = m
+        self.width = 2  # [width] = m
         # VELOCITY (m/s)
         self.velocity = []
         self.max_velocity = [50.0, 10.0]  # [vx, vy]

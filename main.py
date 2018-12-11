@@ -2,11 +2,13 @@
 # import pygame
 import time
 from God import God
+from SpaceFree2D import SpaceSimulation2D
 import matplotlib.pyplot as plt
 
 
 def start_simulation():
     g = God()
+    s = SpaceSimulation2D(50, g)    # constructor(height of space in metres, god)
     g.file_read()
     g.calculate(18)
 
@@ -17,6 +19,7 @@ def start_simulation():
     vx = []
     vy = []
     t = []
+
     for data in g.calculation:
         print(data)
         t.append(data[1])
@@ -26,15 +29,17 @@ def start_simulation():
         vy.append(data[5])
         ax.append(data[-1])
         ay.append(data[-2])
+
     #plt.plot(t, ax)
     #plt.plot(t, ay)
-    plt.plot(t, sx)
-    plt.plot(t, sy)
+    #plt.plot(t, sx)
+    #plt.plot(t, sy)
     #plt.plot(sx, sy)
     #plt.plot(t, vx)
     #plt.plot(t, vy)
-    plt.show()
+    #plt.show()
 
+    s.create_space()
 
 
 if __name__ == "__main__":
