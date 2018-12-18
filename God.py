@@ -4,9 +4,10 @@ from math import ceil
 
 class God:
     def __init__(self):
-        self.cars = []
-        self.last_timestamp = 0
-        self.calculation = []
+        self.cars = []  # list of each car in simulation
+        self.last_timestamp = 0  # stores the last timestamp - to stop the simulation after it
+        self.size = [0, 0]  # stores highest x and y values for mathing the simulation area
+        self.calculation = []  # list if polynomial for a specific period of time
 
     # controls each car
     # interface to periphery
@@ -19,22 +20,45 @@ class God:
     # path_file = pygame.image.load(image_path)
 
     def file_read(self):
-        fileToBeRead = open("path.txt", "r")
+        # INITIALIZE EACH CAR
+        cars_txt = open("cars.txt", "r")
+        for line in cars_txt:
+            car_id = int(line.split(',')[0])
+            spawn_x = float(line.split(',')[1])
+            spawn_y = float(line.split(',')[2])
+            size_x = float(line.split(',')[3])
+            size_y = float(line.split(',')[4])
+            max_vel_x = float(line.split(',')[5])
+            max_vel_y = float(line.split(',')[6])
+            max_acc_x = float(line.split(',')[7])
+            max_acc_y = float(line.split(',')[8])
+            color = str(line.split(',')[9])
+            color = color.replace("\n","")
+            color = color.replace(" ","")
+
+            car = CarFree2D(car_id, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color)
+            self.cars.append(car)
+
+        # READ PATH OF EACH CAR
+        path_txt = open("path.txt", "r")
         x = 0.0
         y = 0.0
         timestamp = 0  # seconds
         destination = True
-        for line in fileToBeRead:
+        for line in path_txt:
             car_id = int(line.split(',')[0])
             timestamp = float(line.split(',')[1])
             x = float(line.split(',')[2])
+            self.size[0] = max((self.size[0], x))
             y = float(line.split(',')[3])
+            self.size[1] = max((self.size[1], y))
             destination = bool(line.split(',')[4])
             # print(xCoord,yCoord,timestamp,destination)
             # self.cars.append())
             # car1.set_destination(10, 10, time.time() + 10)
             if timestamp == 0:
-                self.cars.append(CarFree2D(x, y, car_id))
+                # error
+                pass
             elif timestamp > 0:
                 for car in self.cars:
                     if car.id == car_id:
@@ -58,8 +82,6 @@ class God:
         for car in self.cars:
             car.update()
 
-        for i in range(0,n+1):
+        for i in range(0, n + 1):
             for car in self.cars:
-                self.calculation.append(car.status(i*dt/1000))
-
-
+                self.calculation.append(car.status(i * dt / 1000))

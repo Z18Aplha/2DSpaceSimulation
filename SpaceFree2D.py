@@ -5,11 +5,13 @@ import time
 
 
 class SpaceSimulation2D:
-    def __init__(self, height, g: God):
-        self.px_width = 1920
-        self.px_height = 1080
-        self.height = height
-        self.width = self.height * self.px_width / self.px_height
+    def __init__(self, g: God):
+        self.height = g.size[1]+5
+        self.width = g.size[0]+5
+        self.px_width = 1200
+        self.px_height = self.height/self.width * self.px_width
+        # self.px_height = 500
+        # self.width = self.height * self.px_width / self.px_height
         self.pxm = self.px_width / self.width  # pixel per meter
         self.g = g
         self.car_rect = []
@@ -34,19 +36,19 @@ class SpaceSimulation2D:
 
     def create_space(self):
         for car in self.g.cars:
-            rect = self.grid.create_rectangle(car.spawn[0] * self.pxm, car.spawn[1] * self.pxm,
-                                              (car.spawn[0] + car.length) * self.pxm,
-                                              (car.spawn[1] + car.width) * self.pxm, fill=car.color),
+            rect = self.grid.create_rectangle((car.spawn[0] - car.length/2) * self.pxm, (car.spawn[1] - car.width/2) * self.pxm,
+                                              (car.spawn[0] + car.length/2) * self.pxm,
+                                              (car.spawn[1] + car.width/2) * self.pxm, fill=car.color),
             self.car_rect.append([car.id, rect, car.length, car.width])
 
         self.window.mainloop()
 
     def show_path(self):
         for car in self.g.cars:
-            l = len(car.path.points)
+            length = len(car.path.points)
             x_old = car.spawn[0]
             y_old = car.spawn[1]
-            for i in range(1, l):
+            for i in range(1, length):
                 x = car.path.points[i].x
                 y = car.path.points[i].y
                 self.grid.create_line(x_old * self.pxm, y_old * self.pxm, x * self.pxm, y * self.pxm, fill=car.color)
@@ -63,8 +65,8 @@ class SpaceSimulation2D:
             time.sleep(sleep)
             for shape in self.car_rect:
                 if data[0] == shape[0]:
-                    self.grid.coords(shape[1], data[2] * self.pxm, data[3] * self.pxm, (data[2] + shape[2]) * self.pxm,
-                                     (data[3] + shape[3]) * self.pxm)
+                    self.grid.coords(shape[1], (data[2] - shape[2]/2)* self.pxm, (data[3] - shape[3]/2) * self.pxm, (data[2] + shape[2]/2) * self.pxm,
+                                     (data[3] + shape[3]/2) * self.pxm)
                     self.label_time["text"] = t
                     self.window.update()
         self.label_status["text"] = "simulation done!"

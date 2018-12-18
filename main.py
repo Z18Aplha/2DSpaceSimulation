@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 
 def start_simulation():
     g = God()
-    s = SpaceSimulation2D(50, g)    # constructor(height of space in metres, god)
     g.file_read()
     g.calculate(18)
+    s = SpaceSimulation2D(g)  # constructor(height of space in metres, god)
 
     ax = []
     ay = []

@@ -6,20 +6,20 @@ from Polynomial import Polynomial
 
 
 class CarFree2D:
-    def __init__(self, x: float, y: float, identy: int):
+    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color ):
         # PROPERTIES
-        self.color = "#00FF00"
-        self.id = identy
-        self.spawn = [x, y]
+        self.color = color
+        self.id = id
+        self.spawn = [spawn_x, spawn_y]
         self.position = []  # in m - later: instantiation of 2d space with dates in metres
-        self.length = 4  # [length] = m
-        self.width = 2  # [width] = m
+        self.length = size_x  # [length] = m
+        self.width = size_y  # [width] = m
         # VELOCITY (m/s)
         self.velocity = []
-        self.max_velocity = [50.0, 10.0]  # [vx, vy]
+        self.max_velocity = [max_vel_x, max_vel_y]  # [vx, vy]
         # ACCELERATION (DE-) (m/s^2)
         self.acceleration = []  # [ax, ay]
-        self.max_acceleration = [30.0, 15.0]  # [ax, ay]
+        self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay]
         # PATH
         self.path = Path(self.spawn)
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity)
