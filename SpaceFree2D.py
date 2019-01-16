@@ -6,7 +6,7 @@ import time
 
 class SpaceSimulation2D:
     def __init__(self, g: God):
-        self.height = g.size[1]+5
+        self.height = g.size[1]+10
         self.width = g.size[0]+5
         self.px_width = 1200
         self.px_height = self.height/self.width * self.px_width
@@ -29,8 +29,6 @@ class SpaceSimulation2D:
         self.label_status.grid(row=1, column=2, sticky="e")
         self.label_time.grid(row=1, column=0, sticky="w")
 
-        # TODO complete instructor of SpaceSimulation2D
-        # TODO design Space for Simulation class
         # scalable - width/pixels = metres/Pixel
         # later: obstacles
 
@@ -48,7 +46,7 @@ class SpaceSimulation2D:
             length = len(car.path.points)
             x_old = car.spawn[0]
             y_old = car.spawn[1]
-            for i in range(1, length):
+            for i in range(0, length):
                 x = car.path.points[i].x
                 y = car.path.points[i].y
                 self.grid.create_line(x_old * self.pxm, y_old * self.pxm, x * self.pxm, y * self.pxm, fill=car.color)

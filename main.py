@@ -1,5 +1,3 @@
-# import os
-# import pygame
 import time
 from God import God
 from SpaceFree2D import SpaceSimulation2D
@@ -7,9 +5,10 @@ import matplotlib.pyplot as plt
 
 
 def start_simulation():
-    g = God()
+    g = God(20, 10)     # time between each data point, time between each controller input (equidistant)
     g.file_read()
-    g.calculate(18)
+    # g.calculate_linear_event() # linear path, event based controller
+    g.calculate_spline_equidistant() # cubic spline interpolation, equidistant controller
     s = SpaceSimulation2D(g)  # constructor(height of space in metres, god)
 
     ax = []

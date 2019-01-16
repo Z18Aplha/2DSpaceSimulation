@@ -3,11 +3,13 @@ from math import ceil
 
 
 class God:
-    def __init__(self):
+    def __init__(self, dt, c_dt):
         self.cars = []  # list of each car in simulation
         self.last_timestamp = 0  # stores the last timestamp - to stop the simulation after it
-        self.size = [0, 0]  # stores highest x and y values for mathing the simulation area
+        self.size = [0, 0]  # stores highest x and y values for matching the simulation area
         self.calculation = []  # list if polynomial for a specific period of time
+        self.dt = dt    # time between each data point
+        self.c_dt = c_dt    # time between each controller input (just for equidistant controller)
 
     # controls each car
     # interface to periphery
@@ -25,7 +27,9 @@ class God:
         for line in cars_txt:
             car_id = int(line.split(',')[0])
             spawn_x = float(line.split(',')[1])
+            self.size[0] = max((self.size[0], spawn_x))
             spawn_y = float(line.split(',')[2])
+            self.size[1] = max((self.size[1], spawn_y))
             size_x = float(line.split(',')[3])
             size_y = float(line.split(',')[4])
             max_vel_x = float(line.split(',')[5])
@@ -33,10 +37,10 @@ class God:
             max_acc_x = float(line.split(',')[7])
             max_acc_y = float(line.split(',')[8])
             color = str(line.split(',')[9])
-            color = color.replace("\n","")
-            color = color.replace(" ","")
+            color = color.replace("\n", "")
+            color = color.replace(" ", "")
 
-            car = CarFree2D(car_id, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color)
+            car = CarFree2D(car_id, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color, self.c_dt)
             self.cars.append(car)
 
         # READ PATH OF EACH CAR
@@ -72,16 +76,30 @@ class God:
                 # error_output
                 pass
 
-    def calculate(self, dt):
+    def calculate_linear_event(self):
 
         # LAST TIMESTAMP
-        # dt in ms, timestamp in s
         # n is #of of outputs
-        n = ceil(self.last_timestamp * 1000 / dt)
+        n = ceil(self.last_timestamp * 1000 / self.dt)
 
         for car in self.cars:
             car.update()
 
         for i in range(0, n + 1):
             for car in self.cars:
-                self.calculation.append(car.status(i * dt / 1000))
+                self.calculation.append(car.status(i * self.dt / 1000))
+
+    def calculate_spline_equidistant(self):
+        # c_dt... time between each controller input in ms
+
+        for car in self.cars:
+            car.create_spline()
+
+        n = ceil(self.last_timestamp * 1000 / self.dt)
+
+        for car in self.cars:
+            car.update()
+
+        for i in range(0, n + 1):
+            for car in self.cars:
+                self.calculation.append(car.status(i * self.dt / 1000))

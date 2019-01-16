@@ -6,7 +6,7 @@ from Polynomial import Polynomial
 
 
 class CarFree2D:
-    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color ):
+    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color, c_dt):
         # PROPERTIES
         self.color = color
         self.id = id
@@ -23,6 +23,7 @@ class CarFree2D:
         # PATH
         self.path = Path(self.spawn)
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity)
+        self.c_dt = c_dt
 
     # GETTER
     def get_position(self):
@@ -97,9 +98,13 @@ class CarFree2D:
 
         if self.controller.check_possibility(self.path.points[-1], p):
             self.path.add(p)
-            self.controller.create_path(self.path.points[-2], p)
+            # self.controller.create_path_linear_event(self.path.points[-2], p)   # linear path, controller event based
         else:
             print("The point (" + str(p.x) + "|" + str(p.y) + ") is to far away. Skipped.")
+
+    def create_spline(self):
+        self.controller.create_path_spline_equidistant(self.path.points, self.c_dt) # spline interpolation, controller equidistant
+
 
     # SIMULATION
     def update(self):

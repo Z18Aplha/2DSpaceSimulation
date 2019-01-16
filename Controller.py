@@ -2,6 +2,9 @@ from Path import Path
 from Point import Point
 from math import sqrt, copysign
 from Polynomial import Polynomial
+from scipy.interpolate import interp1d
+import numpy as np
+from math import ceil
 
 
 class Controller:
@@ -33,7 +36,7 @@ class Controller:
 
         return possible
 
-    def create_path(self, last: Point, destination: Point):
+    def create_path_linear_event(self, last: Point, destination: Point):
         # first step: linear
 
         t = destination.time - last.time
@@ -81,3 +84,49 @@ class Controller:
         # STOP POINT
         control = [Polynomial(0, 0, 0), Polynomial(0, 0, 0), destination.time]
         self.controls.append(control)
+
+    def create_path_spline_equidistant(self, path, c_dt):
+        # CREATING SPLINES FOR EACH DIRECTION
+        x = []
+        y = []
+        t = []
+
+        for point in path:
+            x.append(point.x)
+            y.append(point.y)
+            t.append(point.time)
+
+        spline_x = interp1d(t, x, kind="cubic")
+        spline_y = interp1d(t, y, kind="cubic")
+
+        # CALCULATING ACCELERATION VALUES
+        n = ceil(t[-1]*1000/c_dt)   # #inputs of the controller
+        t_new = np.linspace(0, t[-1], num=n, endpoint=True)     # each time of controller input
+        x_new = spline_x(t_new)     # spline at each time
+        y_new = spline_y(t_new)
+
+        self.path.points = []
+        for i in range(0, n-1):
+            self.path.add(Point(x_new[i], y_new[i], t_new[i], True))
+
+        vx = []
+        vy = []
+        vx.append(0)
+        vy.append(0)
+        for i in range(1, n-1):
+            vx.append((x_new[i] - x_new[i-1])/(c_dt/1000))
+            vy.append((y_new[i] - y_new[i-1])/(c_dt/1000))
+
+        for i in range(1, n-1):
+            ax = ((vx[i] - vx[i-1])/(c_dt/1000))
+            ay = ((vy[i] - vy[i-1])/(c_dt/1000))
+            control = [Polynomial(0, 0, ax), Polynomial(0, 0, ay), c_dt*(i-1)/1000]
+            self.controls.append(control)
+        pass
+
+
+
+            # Liste mit "Ableitungen" zwischen jedem Punkte von x/y_new --> Geschwindigkeit
+            # aus dieser Liste soll jetzt Liste für Beschleunigungen werden
+            # Frage: einfach liste machen und werte aller c_dt entnehmen oder andere algorithmus zur bestimmung?
+            # bei sehr großen n --> einfach entsprechenden wert
