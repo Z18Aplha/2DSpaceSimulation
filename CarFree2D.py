@@ -104,7 +104,7 @@ class CarFree2D:
 
     def create_spline(self):
         self.controller.create_path_spline_equidistant(self.path.points, self.c_dt) # spline interpolation, controller equidistant
-
+        #self.controller.spline_other_method(self.path.points, self.c_dt)
 
     # SIMULATION
     def update(self):

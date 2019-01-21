@@ -8,7 +8,7 @@ class SpaceSimulation2D:
     def __init__(self, g: God):
         self.height = g.size[1]+10
         self.width = g.size[0]+5
-        self.px_width = 1200
+        self.px_width = 1500
         self.px_height = self.height/self.width * self.px_width
         # self.px_height = 500
         # self.width = self.height * self.px_width / self.px_height

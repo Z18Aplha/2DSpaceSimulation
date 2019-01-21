@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def start_simulation():
-    g = God(20, 10)     # time between each data point, time between each controller input (equidistant)
+    g = God(20, 75)     # time between each data point, time between each controller input (equidistant)
     g.file_read()
     # g.calculate_linear_event() # linear path, event based controller
     g.calculate_spline_equidistant() # cubic spline interpolation, equidistant controller

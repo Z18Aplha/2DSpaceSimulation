@@ -1,5 +1,6 @@
 from CarFree2D import CarFree2D
 from math import ceil
+from Point import Point
 
 
 class God:
@@ -8,8 +9,8 @@ class God:
         self.last_timestamp = 0  # stores the last timestamp - to stop the simulation after it
         self.size = [0, 0]  # stores highest x and y values for matching the simulation area
         self.calculation = []  # list if polynomial for a specific period of time
-        self.dt = dt    # time between each data point
-        self.c_dt = c_dt    # time between each controller input (just for equidistant controller)
+        self.dt = dt    # time between each data point in ms
+        self.c_dt = c_dt    # time between each controller input (just for equidistant controller) in ms
 
     # controls each car
     # interface to periphery
@@ -49,6 +50,7 @@ class God:
         y = 0.0
         timestamp = 0  # seconds
         destination = True
+        i=0
         for line in path_txt:
             car_id = int(line.split(',')[0])
             timestamp = float(line.split(',')[1])
@@ -57,9 +59,7 @@ class God:
             y = float(line.split(',')[3])
             self.size[1] = max((self.size[1], y))
             destination = bool(line.split(',')[4])
-            # print(xCoord,yCoord,timestamp,destination)
-            # self.cars.append())
-            # car1.set_destination(10, 10, time.time() + 10)
+
             if timestamp == 0:
                 # error
                 pass
@@ -75,6 +75,11 @@ class God:
             else:
                 # error_output
                 pass
+
+        # TODO better boundary conditions (hermite)
+        for car in self.cars:       # worse way to force f'(stop) = 0
+            for i in range(1,10):
+                car.set_destination(car.path.points[-1].x, car.path.points[-1].y, car.path.points[-1].time+(1/1000))
 
     def calculate_linear_event(self):
 
