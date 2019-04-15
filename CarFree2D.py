@@ -3,23 +3,24 @@ from Path import Path
 from math import sqrt
 from Point import Point
 from Polynomial import Polynomial
+from PathPlanner import PathPlanner
 
 
 class CarFree2D:
     def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color, c_dt):
-        # PROPERTIES
+        # PHYSICAL PROPERTIES
         self.color = color
         self.id = id
         self.spawn = [spawn_x, spawn_y]
-        self.position = []  # in m - later: instantiation of 2d space with dates in metres
-        self.length = size_x  # [length] = m
-        self.width = size_y  # [width] = m
-        # VELOCITY (m/s)
-        self.velocity = []
-        self.max_velocity = [max_vel_x, max_vel_y]  # [vx, vy]
-        # ACCELERATION (DE-) (m/s^2)
-        self.acceleration = []  # [ax, ay]
-        self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay]
+        self.position = []      # in m - later: instantiation of 2d space with dates in metres --> WAS HEISST DAS?
+        self.length = size_x    # in m
+        self.width = size_y     # in m
+        # VELOCITY
+        self.velocity = []      # in m/s
+        self.max_velocity = [max_vel_x, max_vel_y]  # [vx, vy] in m/s
+        # ACCELERATION
+        self.acceleration = []  # [ax, ay] in m/s^2
+        self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay] in m/s^2
         # PATH
         self.path = Path(self.spawn)
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity)
@@ -95,16 +96,8 @@ class CarFree2D:
 
     def set_destination(self, x, y, t):
         p = Point(x, y, t, True)
-
-        if self.controller.check_possibility(self.path.points[-1], p):
-            self.path.add(p)
-            # self.controller.create_path_linear_event(self.path.points[-2], p)   # linear path, controller event based
-        else:
-            print("The point (" + str(p.x) + "|" + str(p.y) + ") is to far away. Skipped.")
-
-    def create_spline(self):
-        self.controller.create_path_spline_equidistant(self.path.points, self.c_dt) # spline interpolation, controller equidistant
-        #self.controller.spline_other_method(self.path.points, self.c_dt)
+        self.path.add(p)
+        # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
     # SIMULATION
     def update(self):
@@ -136,3 +129,6 @@ class CarFree2D:
             sy = function[1].integration().add_constant(sy_old)
             t_old = function[2]
             self.position.append([sx, sy, function[2]])
+
+    def create_spline(self):
+        self.controller.calculate_controls(self.path.points)

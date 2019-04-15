@@ -2,23 +2,26 @@ from tkinter import *
 from God import God
 from CarFree2D import CarFree2D
 import time
+from Obstacles2D import Obstacles2D
+
 
 
 class SpaceSimulation2D:
     def __init__(self, g: God):
-        self.height = g.size[1]+10
-        self.width = g.size[0]+5
-        self.px_width = 1500
+        self.height = g.size[1]+3
+        self.width = g.size[0]+3
+        self.px_width = 600
         self.px_height = self.height/self.width * self.px_width
         # self.px_height = 500
         # self.width = self.height * self.px_width / self.px_height
         self.pxm = self.px_width / self.width  # pixel per meter
         self.g = g
         self.car_rect = []
+        self.obstacles_rect = []
         # WINDOW
         self.window = Tk()
         self.grid = Canvas(bg="black", height=self.px_height, width=self.px_width)
-        self.button_start = Button(self.window, text="Start Simulation!", command=self.show,
+        self.button_start = Button(self.window, text="Start animation!", command=self.show,
                                    width=int(self.px_width / 22))
         self.label_status = Label(self.window, text="waiting for start", anchor="e", width=int(self.px_width / 22))
         self.label_time = Label(self.window, text="", anchor="w", width=int(self.px_width / 22))
@@ -39,6 +42,12 @@ class SpaceSimulation2D:
                                               (car.spawn[1] + car.width/2) * self.pxm, fill=car.color),
             self.car_rect.append([car.id, rect, car.length, car.width])
 
+        for obst in self.g.obstacles:
+            obstrect = self.grid.create_rectangle((obst.spawn[0] - obst.length/2) * self.pxm, (obst.spawn[1] - obst.width/2) * self.pxm,
+                                              (obst.spawn[0] + obst.length/2) * self.pxm,
+                                              (obst.spawn[1] + obst.width/2) * self.pxm, fill=obst.color),
+            self.obstacles_rect.append([obstrect, obst.length, obst.width])
+
         self.window.mainloop()
 
     def show_path(self):
@@ -56,7 +65,7 @@ class SpaceSimulation2D:
     def show(self):
         self.show_path()
         t = 0
-        self.label_status["text"] = "simulating..."
+        self.label_status["text"] = "animating..."
         for data in self.g.calculation:
             sleep = data[1] - t
             t = data[1]
@@ -67,5 +76,5 @@ class SpaceSimulation2D:
                                      (data[3] + shape[3]/2) * self.pxm)
                     self.label_time["text"] = t
                     self.window.update()
-        self.label_status["text"] = "simulation done!"
+        self.label_status["text"] = "animation done!"
         self.window.update()

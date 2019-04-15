@@ -1,4 +1,4 @@
-
+# refreshed
 class Polynomial:
     def __init__(self, x2, x1, x0):
         self.x2 = x2

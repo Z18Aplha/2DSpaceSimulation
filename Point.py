@@ -1,5 +1,5 @@
 
-
+# refreshed
 class Point:
     def __init__(self, x: float, y: float, t: float, destination: bool):
         self.x = x

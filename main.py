@@ -2,14 +2,14 @@ import time
 from God import God
 from SpaceFree2D import SpaceSimulation2D
 import matplotlib.pyplot as plt
+from Obstacles2D import Obstacles2D
 
 
 def start_simulation():
-    g = God(20, 75)     # time between each data point, time between each controller input (equidistant)
+    g = God(20, 75)     # time between each data point, time between each controller input (equidistant in time)
     g.file_read()
-    # g.calculate_linear_event() # linear path, event based controller
-    g.calculate_spline_equidistant() # cubic spline interpolation, equidistant controller
-    s = SpaceSimulation2D(g)  # constructor(height of space in metres, god)
+    g.simulate() # cubic spline interpolation, equidistant controller
+    s = SpaceSimulation2D(g)  # constructor(height of space in metres, god) --> WHAT DOES "HEIGHT OF SPACE" MEAN?
 
     ax = []
     ay = []
