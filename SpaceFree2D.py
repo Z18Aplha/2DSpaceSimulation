@@ -62,8 +62,25 @@ class SpaceSimulation2D:
                 x_old = x
                 y_old = y
 
+    def show_shape(self):
+        # shows the calculated shape of the car (beziér curve)
+        for car in self.g.cars:
+            sections = len(car.path_shape[0])
+            x_old = car.spawn[0]
+            y_old = car.spawn[1]
+            for n in range(0, sections):
+                number_of_values = len(car.path_shape[0][n])
+                for i in range(0, number_of_values):
+                    x = car.path_shape[0][n][i]
+                    y = car.path_shape[1][n][i]
+                    self.grid.create_line(x_old * self.pxm, y_old * self.pxm, x * self.pxm, y * self.pxm, fill=car.color)
+                    x_old = x
+                    y_old = y
+
+
     def show(self):
         self.show_path()
+        self.show_shape()
         t = 0
         self.label_status["text"] = "animating..."
         for data in self.g.calculation:
