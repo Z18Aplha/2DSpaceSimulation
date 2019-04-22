@@ -17,9 +17,12 @@ class Controller:
         self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
         self.path = p
+        self.shape = []
         self.controls = []
 
     def calculate_controls(self, path): # currently: beziér curve degree 3
         planner = PathPlanner(path)
-        path = planner.generate_3()
+        self.shape = planner.generate_3()       # function generates shape (without timestamps)
         length = planner.get_section_length()
+
+        # fills the self.controls list with acceleration values

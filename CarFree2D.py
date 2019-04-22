@@ -22,6 +22,7 @@ class CarFree2D:
         self.acceleration = []  # [ax, ay] in m/s^2
         self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay] in m/s^2
         # PATH
+        self.path_shape = []  # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity)
         self.c_dt = c_dt
@@ -132,3 +133,4 @@ class CarFree2D:
 
     def create_spline(self):
         self.controller.calculate_controls(self.path.points)
+        self.path_shape = self.controller.shape
