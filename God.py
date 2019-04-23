@@ -2,7 +2,8 @@ from CarFree2D import CarFree2D
 from math import ceil
 from Point import Point
 from Obstacles2D import Obstacles2D
-
+from CollisionControl import CollisionControl
+import time
 
 class God:
 
@@ -125,18 +126,18 @@ class God:
             if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
                 raise Exception('An obstacle cannot be defined outside the canvas boundary.')
             # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
-            size_x = float(obstacle_data[2])
-            size_y = float(obstacle_data[3])
-            color = str(obstacle_data[4])
+            edges = []
+            for elem in range(len(obstacle_data)-1):
+                edges.append(float(obstacle_data[elem]))
+            color = str(obstacle_data[len(obstacle_data)-1])
             color = color.replace("\n", "")
             color = color.replace(" ", "")
 
-            obstacle = Obstacles2D(spawn_x, spawn_y, size_x, size_y, color)
+            obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
             self.obstacles.append(obstacle)
 
     def simulate(self):
         # c_dt... time between each controller input in ms
-
         for car in self.cars:
             car.create_spline()
 
@@ -148,3 +149,6 @@ class God:
         for i in range(0, n + 1):
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
+
+        coll = CollisionControl(self, .5)
+        coll.check_for_collision()
