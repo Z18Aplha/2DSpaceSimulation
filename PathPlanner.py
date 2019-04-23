@@ -109,7 +109,7 @@ class PathPlanner:
         for n in range(0, len(b1) - 1):
             plt.plot([b2[n][0], b1[n + 1][0]], [b2[n][1], b1[n + 1][1]], 'k--')
 
-        plt.show()
+        #plt.show()
 
         curve = [self.x, self.y]  # multiple arrays: [0:x, 1:y][n:section][i:value]
 

@@ -148,3 +148,6 @@ class God:
         for i in range(0, n + 1):
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
+
+    def detect_collision(self):
+        pass
