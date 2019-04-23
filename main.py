@@ -38,6 +38,7 @@ def start_simulation():
     #plt.plot(sx, sy)
     #plt.plot(t, vx)
     #plt.plot(t, vy)
+
     #plt.show()
 
     s.create_space()

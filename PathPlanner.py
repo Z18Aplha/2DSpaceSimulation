@@ -15,17 +15,6 @@ def distance(p1: Point, p2: Point):
     d = np.linalg.norm([x, y])
     return d
 
-
-def first_der_3():
-    # returns first derivative of Bernstein Polynomial of degree 3
-    pass
-
-
-def second_der_3():
-    # returns second derivative of Bernstein Polynomial of degree 3
-    pass
-
-
 class PathPlanner:
     # based on the paper of Martin Gloderer and Andres Hertle (University of Freiburg)
 
@@ -33,6 +22,36 @@ class PathPlanner:
         self.point_list = points
         self.x = []
         self.y = []
+        self.der1 = []
+        self.der2 = []
+        self.dt = 0.001  # step of parameter t (0...1)
+
+    def first_der_3(self, b1, b2):
+        # returns first derivative of Bernstein Polynomial of degree 3
+        x = len(b1)
+        for i in range(0, len(b1)):
+            der1 = []
+            t = 0
+            while t <= 1:
+                der_x = 3 * ((b1[i][0] - self.point_list[i].x)*(1-t)**2 + (b2[i][0] - b1[i][0])*2*(1-t)*t + (self.point_list[i+1].x - b2[i][0])*(t**2))
+                der_y = 3 * ((b1[i][1] - self.point_list[i].y)*(1-t)**2 + (b2[i][1] - b1[i][1])*2*(1-t)*t + (self.point_list[i+1].y - b2[i][1])*(t**2))
+                der1.append([der_x, der_y])
+                t += self.dt
+            self.der1.append(der1)
+        print('der1 done')
+
+    def second_der_3(self, b1, b2):
+        # returns second derivative of Bernstein Polynomial of degree 3
+        for i in range(0, len(b1)):
+            der2 = []
+            t = 0
+            while t <= 1:
+                der_x = 6 * ((b2[i][0] - 2 * b1[i][0] + self.point_list[i].x) * (1-t) + (self.point_list[i+1].x - 2 * b2[i][0] + b1[i][0])*(t))
+                der_y = 6 * ((b2[i][1] - 2 * b1[i][1] + self.point_list[i].y) * (1-t) + (self.point_list[i+1].y - 2 * b2[i][1] + b1[i][1])*(t))
+                der2.append([der_x, der_y])
+                t += self.dt
+            self.der2.append(der2)
+        print('der2 done')
 
     def generate_3(self):
         # generates Bezier-Curve with Bernstein Polynomial of degree 3
@@ -69,7 +88,6 @@ class PathPlanner:
 
         # CALCULATING BEZIÉR WITH BERNSTEIN POLYNOMIAL (degree 3)
         i = 0
-        dt = 0.001  # step of parameter t (0...1)
 
         while i < len(b1):
             section_x = []
@@ -77,7 +95,7 @@ class PathPlanner:
             if i == 0:
                 t = 0
             else:
-                t = dt
+                t = self.dt
             while t <= 1:
                 x = (1 - t) ** 3 * self.point_list[i].x + 3 * (1 - t) ** 2 * t * b1[i][0] + 3 * (1 - t) * t ** 2 * \
                     b2[i][0] + t ** 3 * self.point_list[i + 1].x
@@ -85,7 +103,7 @@ class PathPlanner:
                     b2[i][1] + t ** 3 * self.point_list[i + 1].y
                 section_x.append(x)
                 section_y.append(y)
-                t += dt
+                t += self.dt
                 t = np.round(t, 7)  # don't know why, but (i.e. at 0.15) python does sth. like this: 0.15000000002
             self.x.append(section_x)
             self.y.append(section_y)
@@ -109,14 +127,17 @@ class PathPlanner:
         for n in range(0, len(b1) - 1):
             plt.plot([b2[n][0], b1[n + 1][0]], [b2[n][1], b1[n + 1][1]], 'k--')
 
-        #plt.show()
+       # plt.show()
 
         curve = [self.x, self.y]  # multiple arrays: [0:x, 1:y][n:section][i:value]
+
+        self.first_der_3(b1, b2)
+        self.second_der_3(b1, b2)
 
         return curve
 
     def get_section_length(self):
-        # accuracy of calculation is limited by the chosen 'dt' in the generate_3 function (the higher, the better)
+        # accuracy of calculation is limited by the chosen 'self.dt' in the generate_3 function (the higher, the better)
         length = []
         for i in range(0, len(self.x)):
             l = 0
@@ -128,4 +149,11 @@ class PathPlanner:
 
     def get_curvature(self):
         # returns curvature of each calculated point
-        pass
+        curvature = []
+        for section in range(0, len(self.point_list)-1):
+            c = []
+            for i in range(0, len(self.der1[section])):
+                c.append((self.der1[section][i][0] * self.der2[section][i][1] - self.der1[section][i][1]*self.der2[section][i][0])/(self.der1[section][i][0]**2 + self.der1[section][i][1]**2)**(3/2))
+            curvature.append(c)
+        print('curvature done')
+        return curvature
