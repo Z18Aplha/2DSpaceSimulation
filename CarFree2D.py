@@ -24,6 +24,7 @@ class CarFree2D:
         # PATH
         self.path_shape = []  # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)
+        self.path_points_given = []     # list for the given points with the path.txt file
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity, self.length)
         self.c_dt = c_dt
 
@@ -98,6 +99,7 @@ class CarFree2D:
     def set_destination(self, x, y, t):
         p = Point(x, y, t, True)
         self.path.add(p)
+        self.path_points_given.append(p)
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
     # SIMULATION

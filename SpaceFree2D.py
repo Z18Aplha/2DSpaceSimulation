@@ -82,6 +82,12 @@ class SpaceSimulation2D:
                 x_old = x
                 y_old = y
 
+    def show_givenPoints(self):
+        for car in self.g.cars:
+            for point in car.path_points_given:
+                size = 0.25*self.pxm
+                self.grid.create_rectangle(point.x*self.pxm-size, point.y*self.pxm-size, point.x*self.pxm + size, point.y*self.pxm + size, fill=car.color)
+
     def show_shape(self):
         # shows the calculated shape of the car (beziér curve)
         for car in self.g.cars:
@@ -101,6 +107,7 @@ class SpaceSimulation2D:
     def show(self):
         self.show_path()
         self.show_shape()
+        self.show_givenPoints()
         t = 0
         self.label_status["text"] = "animating..."
         for data in self.g.calculation:
@@ -120,6 +127,7 @@ class SpaceSimulation2D:
     def show2(self):
         #self.show_path()
         self.show_shape()
+        self.show_givenPoints()
         self.label_status["text"] = "animating..."
         # storage for prior point, list index i is equal to the car_id (if car id's are correct in cars.txt)
         x_old = []
