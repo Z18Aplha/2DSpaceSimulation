@@ -25,7 +25,6 @@ class SpaceSimulation2D:
         self.label_status = Label(self.window, text="waiting for start", anchor="e", width=int(self.px_width / 22))
         self.label_time = Label(self.window, text="", anchor="w", width=int(self.px_width / 22))
         # self.grid.create_line(100, 100, 500, 500, fill="red")
-
         self.grid.grid(row=0, column=0, columnspan=3)
         self.button_start.grid(row=1, column=1, sticky="e")
         self.label_status.grid(row=1, column=2, sticky="e")

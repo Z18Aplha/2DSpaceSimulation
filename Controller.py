@@ -33,7 +33,7 @@ class Controller:
             for curve in section:
                 steering.append(np.arctan(self.length_car * curve)/np.pi * 180)
         plt.plot(steering)
-        #plt.show()
+        plt.show()
 
         pass
         # fills the self.controls list with acceleration values
