@@ -85,25 +85,27 @@ class God:
 
             car_id = int(path_data[0])
             #timestamp = float(path_data[1])
-            pos_x = float(path_data[2])
-            pos_y = float(path_data[3])
+            pos_x = float(path_data[1])
+            pos_y = float(path_data[2])
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
                 raise Exception('The path of a car cannot reach outside the canvas.')
-            destination = bool(path_data[4])
+            #destination = bool(path_data[4])
 
             #if timestamp == 0:
             #    raise Exception(
             #        'For a timestamp of 0 you need to change the spawn point of the car, not the path.txt file.')
             #elif timestamp > 0:
-            if destination:
+            #if destination:
                 #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
                 #self.last_timestamp = max(timestamp, self.last_timestamp)
-                self.cars[car_id].set_destination(pos_x, pos_y)
-            else:
+                #self.cars[car_id].set_destination(pos_x, pos_y)
+            #else:
                 # car.set_waypoint(pos_x, pos_y, timestamp)
-                pass
+                #pass
             #else:
             #    raise Exception('The input value for timestamp cannot be parsed correctly.')
+
+            self.cars[car_id].set_waypoint(pos_x, pos_y)
 
             # CHECK IF EVERY CAR HAS AT LEAST ONE DESTINATION POINT
         for car in self.cars:

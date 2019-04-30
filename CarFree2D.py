@@ -96,8 +96,8 @@ class CarFree2D:
     #        vy = max(-self.max_velocity[1], min(vy, self.max_velocity[1]))
     #        self.velocity = [vx, vy]
 
-    def set_destination(self, x, y):
-        p = Point(x, y, True)
+    def set_waypoint(self, x, y):
+        p = Point(x, y)
         self.path.add(p)
         self.path_points_given.append(p)
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
