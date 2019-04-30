@@ -81,9 +81,9 @@ class SpaceSimulation2D:
                 x_old = x
                 y_old = y
 
-    def show_givenPoints(self):
+    def show_waypoints(self):
         for car in self.g.cars:
-            for point in car.path_points_given:
+            for point in car.waypoints:
                 size = 0.25*self.pxm
                 self.grid.create_rectangle(point.x*self.pxm-size, point.y*self.pxm-size, point.x*self.pxm + size, point.y*self.pxm + size, fill=car.color)
 
@@ -106,7 +106,7 @@ class SpaceSimulation2D:
     def show(self):
         self.show_path()
         self.show_shape()
-        self.show_givenPoints()
+        self.show_waypoints()
         t = 0
         self.label_status["text"] = "animating..."
         for data in self.g.calculation:
@@ -126,7 +126,7 @@ class SpaceSimulation2D:
     def show2(self):
         #self.show_path()
         self.show_shape()
-        self.show_givenPoints()
+        self.show_waypoints()
         self.label_status["text"] = "animating..."
         # storage for prior point, list index i is equal to the car_id (if car id's are correct in cars.txt)
         x_old = []
@@ -155,10 +155,8 @@ class SpaceSimulation2D:
                 self.grid.move(car_tag, dx, dy)
                 x_old[data[0]] = data[2]
                 y_old[data[0]] = data[3]
-                # refresh window TODO this routine is very slow. ideas?
-                #self.window.update()
             if i % car_count == car_count - 1:
                 # window will be updated when the last car of the timestamp is refreshed
-                self.window.update()
+                self.window.update()    # TODO this routine is very slow. ideas?
             i += 1
         self.label_status["text"] = "animation done!"

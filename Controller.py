@@ -24,11 +24,12 @@ class Controller:
         self.steer_control = []     # steering angle controls
 
     def calculate_controls(self, path): # currently: beziér curve degree 3
+        # CREATING NECESSARY VARIABLES
         planner = PathPlanner(path)
         self.shape = planner.generate_3()       # function generates shape (without timestamps)
         length = planner.get_section_length()   # length of each section (shape between two waypoints)
         curvature = planner.get_curvature()     # list of curvature values of the shape - needed for Ackerman steering
-        steering = []
+        steering = []                           # steering angle of car
         for section in curvature:
             for curve in section:
                 steering.append(np.arctan(self.length_car * curve)/np.pi * 180)

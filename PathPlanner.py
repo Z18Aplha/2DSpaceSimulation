@@ -15,6 +15,7 @@ def distance(p1: Point, p2: Point):
     d = np.linalg.norm([x, y])
     return d
 
+
 class PathPlanner:
     # based on the paper of Martin Gloderer and Andres Hertle (University of Freiburg)
 
@@ -33,8 +34,10 @@ class PathPlanner:
             der1 = []
             t = 0
             while t <= 1:
-                der_x = 3 * ((b1[i][0] - self.point_list[i].x)*(1-t)**2 + (b2[i][0] - b1[i][0])*2*(1-t)*t + (self.point_list[i+1].x - b2[i][0])*(t**2))
-                der_y = 3 * ((b1[i][1] - self.point_list[i].y)*(1-t)**2 + (b2[i][1] - b1[i][1])*2*(1-t)*t + (self.point_list[i+1].y - b2[i][1])*(t**2))
+                der_x = 3 * ((b1[i][0] - self.point_list[i].x) * (1 - t) ** 2 + (b2[i][0] - b1[i][0]) * 2 * (
+                            1 - t) * t + (self.point_list[i + 1].x - b2[i][0]) * (t ** 2))
+                der_y = 3 * ((b1[i][1] - self.point_list[i].y) * (1 - t) ** 2 + (b2[i][1] - b1[i][1]) * 2 * (
+                            1 - t) * t + (self.point_list[i + 1].y - b2[i][1]) * (t ** 2))
                 der1.append([der_x, der_y])
                 t += self.dt
             self.der1.append(der1)
@@ -46,8 +49,10 @@ class PathPlanner:
             der2 = []
             t = 0
             while t <= 1:
-                der_x = 6 * ((b2[i][0] - 2 * b1[i][0] + self.point_list[i].x) * (1-t) + (self.point_list[i+1].x - 2 * b2[i][0] + b1[i][0])*(t))
-                der_y = 6 * ((b2[i][1] - 2 * b1[i][1] + self.point_list[i].y) * (1-t) + (self.point_list[i+1].y - 2 * b2[i][1] + b1[i][1])*(t))
+                der_x = 6 * ((b2[i][0] - 2 * b1[i][0] + self.point_list[i].x) * (1 - t) + (
+                            self.point_list[i + 1].x - 2 * b2[i][0] + b1[i][0]) * (t))
+                der_y = 6 * ((b2[i][1] - 2 * b1[i][1] + self.point_list[i].y) * (1 - t) + (
+                            self.point_list[i + 1].y - 2 * b2[i][1] + b1[i][1]) * (t))
                 der2.append([der_x, der_y])
                 t += self.dt
             self.der2.append(der2)
@@ -150,10 +155,12 @@ class PathPlanner:
     def get_curvature(self):
         # returns curvature of each calculated point
         curvature = []
-        for section in range(0, len(self.point_list)-1):
+        for section in range(0, len(self.point_list) - 1):
             c = []
             for i in range(0, len(self.der1[section])):
-                c.append((self.der1[section][i][0] * self.der2[section][i][1] - self.der1[section][i][1]*self.der2[section][i][0])/(self.der1[section][i][0]**2 + self.der1[section][i][1]**2)**(3/2))
+                c.append((self.der1[section][i][0] * self.der2[section][i][1] - self.der1[section][i][1] *
+                          self.der2[section][i][0]) / (
+                                     self.der1[section][i][0] ** 2 + self.der1[section][i][1] ** 2) ** (3 / 2))
             curvature.append(c)
         print('curvature done')
         return curvature
