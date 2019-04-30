@@ -6,28 +6,29 @@ import time
 
 class CollisionControl:
 
-    def __init__(self, god: God, safe_spacing):
+    def __init__(self, god: God):
         self.god = god
         self.coll_obstacles = []
         self.coll_obst_cages = []
-        self.spacing = 0.5
+        self.spacing = .5
         self.list = god.calculation[:]
 
     # Simple, aber rechenintensive Variante, da der Status jedes mal berechnet werden muss und nicht auf bereits
-    # vorhandene Ergbenisse zurückgegriffen wird, ist zu Vergleichszwecken noch vorhanden
+    # vorhandene Ergebnisse zurückgegriffen wird, ist zu Vergleichszwecken noch vorhanden
     def make_car_poly_old(self, car: CarFree2D, t):
-            position = Vector(car.status(t)[2], car.status(t)[3])
-            return Concave_Poly(position, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
+        position = Vector(car.status(t)[2], car.status(t)[3])
+        return Concave_Poly(position, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
 
     def make_car_poly(self, car: CarFree2D, t):
+        pos = 0
         for i in range(len(self.god.cars)):
             status = self.list[i]
             if round(status[1]*1000) == t:
                 if status[0] == car.id:
-                    position = Vector(status[2], status[3])
+                    pos = Vector(status[2]-car.length/2, status[3]-car.width/2)
             else:
                 raise Exception('Time did not match')
-        return Concave_Poly(position, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
+        return Concave_Poly(pos, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
 
     def safety_zone(self, poly):
         sides = len(poly.points)
@@ -70,7 +71,7 @@ class CollisionControl:
         elem = 0
         while elem < len(obstacle.edges):
             points.append(Vector(obstacle.edges[elem], obstacle.edges[elem+1])-pos)
-            elem +=2
+            elem += 2
         return Concave_Poly(pos, points)
 
     def check_for_collision(self):
@@ -90,12 +91,10 @@ class CollisionControl:
                             if collide(c, ob_cage):
                                 print("Car", car_col.id, "Soft Collision with obstacle @", i*(self.god.dt/1000))
                 cars_temp = self.god.cars[:]
-                # for c_temp in self.god.cars:
-                #     cars_temp.append(c_temp)
                 cars_temp.remove(car_col)
                 for car in cars_temp:
-                    c2 = self.make_car_poly(car, i*(self.god.dt))
+                    c2 = self.make_car_poly(car, i*self.god.dt)
                     if collide(c, c2):
-                        print("Car", car_col.id, "Hard Collision with car ", car.id, " @ ", i*(self.god.dt/1000))
+                        print("Car", car_col.id, "Hard Collision with car", car.id, "@", i*(self.god.dt/1000))
             for j in range(len(self.god.cars)):
                 del self.list[0]
