@@ -10,7 +10,7 @@ class CollisionControl:
         self.god = god
         self.coll_obstacles = []
         self.coll_obst_cages = []
-        self.spacing = .5
+        self.spacing = god.parameters["CollisionControl"]["spacing"]
         self.list = god.calculation[:]
 
     # Simple, aber rechenintensive Variante, da der Status jedes mal berechnet werden muss und nicht auf bereits

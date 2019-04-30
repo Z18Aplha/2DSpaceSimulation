@@ -9,7 +9,7 @@ class SpaceSimulation2D:
     def __init__(self, g: God):
         self.height = g.size[1] + 3
         self.width = g.size[0] + 3
-        self.px_width = 600
+        self.px_width = g.parameters["SpaceFree2D"]["px_width"]
         self.px_height = self.height / self.width * self.px_width
         # self.px_height = 500
         # self.width = self.height * self.px_width / self.px_height
@@ -134,7 +134,7 @@ class SpaceSimulation2D:
         self.show_shape()
         self.show_givenPoints()
         self.label_status["text"] = "animating..."
-        # storage for prior point, list index i is equal to the car_id (if car id's are correct in cars.txt)
+        # storage for prior point, list index i is equal to the car_id (if car id's are correct in Parameters.json)
         x_old = []
         y_old = []
         # counts the number of runs through the loop, needed for better performing window updates

@@ -1,0 +1,231 @@
+{
+  "God":
+    {
+    "size": [30, 20],
+    "m2p_factor": 20,
+    "dt": 20,
+    "c_dt": 75
+    },
+  "SpaceFree2D":
+    {
+    "px_width": 600
+    },
+  "Cars":
+    [
+      {
+        "index": 0,
+        "spawn_x": 5.0,
+        "spawn_y": 5.0,
+        "length": 4.0,
+        "width": 2.0,
+        "max_vel_x": 50,
+        "max_vel_y": 50,
+        "max_acc_x": 30,
+        "max_acc_y": 30,
+        "color": "#FFAF00"
+      },
+      {
+        "index": 1,
+        "spawn_x": 10,
+        "spawn_y": 10,
+        "length": 2,
+        "width": 4,
+        "max_vel_x": 50,
+        "max_vel_y": 50,
+        "max_acc_x": 30,
+        "max_acc_y": 30,
+        "color": "burlywood3"
+      },
+      {
+        "index": 2,
+        "spawn_x": 20,
+        "spawn_y": 10,
+        "length": 2,
+        "width": 1,
+        "max_vel_x": 50,
+        "max_vel_y": 50,
+        "max_acc_x": 30,
+        "max_acc_y": 30,
+        "color": "purple"
+      },
+      {
+        "index": 3,
+        "spawn_x": 5,
+        "spawn_y": 10,
+        "length": 5,
+        "width": 2,
+        "max_vel_x": 50,
+        "max_vel_y": 50,
+        "max_acc_x": 30,
+        "max_acc_y": 30,
+        "color": "red"
+      }
+    ],
+  "Path":
+          [
+            {
+              "car_id": 0,
+              "timestamp": 3,
+              "pos_x": 10.0,
+              "pos_y": 10.0,
+              "destination": true
+            },
+            {
+              "car_id": 2,
+              "timestamp": 5,
+              "pos_x": 20.0,
+              "pos_y": 15.0,
+              "destination": true
+            },
+            {
+              "car_id": 0,
+              "timestamp": 6,
+              "pos_x": 25.0,
+              "pos_y": 10.0,
+              "destination": true
+            },
+            {
+              "car_id": 1,
+              "timestamp": 7,
+              "pos_x": 10.0,
+              "pos_y": 15.0,
+              "destination": true
+            },
+            {
+              "car_id": 2,
+              "timestamp": 8,
+              "pos_x": 25.0,
+              "pos_y": 4.0,
+              "destination": true
+            },
+            {
+              "car_id": 0,
+              "timestamp": 9,
+              "pos_x": 20.0,
+              "pos_y": 15.0,
+              "destination": true
+            },
+            {
+              "car_id": 1,
+              "timestamp": 10,
+              "pos_x": 20.0,
+              "pos_y": 18.0,
+              "destination": true
+            },
+            {
+              "car_id": 0,
+              "timestamp": 12,
+              "pos_x": 15.0,
+              "pos_y": 15.0,
+              "destination": true
+            },
+            {
+              "car_id": 1,
+              "timestamp": 12,
+              "pos_x": 20.0,
+              "pos_y": 10.0,
+              "destination": true
+            },
+            {
+              "car_id": 2,
+              "timestamp": 15.0,
+              "pos_x": 25.0,
+              "pos_y": 5.0,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 15.5,
+              "pos_x": 11.25,
+              "pos_y": 5,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 16,
+              "pos_x": 17.5,
+              "pos_y": 10,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 16.5,
+              "pos_x": 23.75,
+              "pos_y": 15,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 17,
+              "pos_x": 30,
+              "pos_y": 10,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 17.5,
+              "pos_x": 23.75,
+              "pos_y": 5,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 18,
+              "pos_x": 17.5,
+              "pos_y": 10,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 18.5,
+              "pos_x": 11.25,
+              "pos_y": 15,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 19,
+              "pos_x": 5,
+              "pos_y": 10,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 19.5,
+              "pos_x": 11.25,
+              "pos_y": 5,
+              "destination": true
+            },
+            {
+              "car_id": 3,
+              "timestamp": 20,
+              "pos_x": 17.5,
+              "pos_y": 10,
+              "destination": true
+            }
+          ],
+  "Obstacles":
+    [
+      {
+        "corners": [10, 15, 12, 15, 12, 17, 10, 17],
+        "color": "red"
+      },
+      {
+        "corners": [15, 15, 17, 15, 17, 17, 15, 17],
+        "color": "red"
+      },
+      {
+        "corners": [20, 15, 22, 15, 22, 17, 20, 17],
+        "color": "red"
+      }
+    ],
+  "Channel":
+  {
+    "latency": 20,
+    "error_probability": 0.05
+  },
+  "CollisionControl":
+  {
+    "spacing": 0.5
+  }
+}
