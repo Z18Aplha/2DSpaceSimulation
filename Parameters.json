@@ -65,143 +65,104 @@
           [
             {
               "car_id": 0,
-              "timestamp": 3,
               "pos_x": 10.0,
-              "pos_y": 10.0,
-              "destination": true
+              "pos_y": 10.0
             },
             {
               "car_id": 2,
-              "timestamp": 5,
               "pos_x": 20.0,
-              "pos_y": 15.0,
-              "destination": true
+              "pos_y": 15.0
             },
             {
               "car_id": 0,
-              "timestamp": 6,
               "pos_x": 25.0,
-              "pos_y": 10.0,
-              "destination": true
+              "pos_y": 10.0
             },
             {
               "car_id": 1,
-              "timestamp": 7,
               "pos_x": 10.0,
-              "pos_y": 15.0,
-              "destination": true
+              "pos_y": 15.0
             },
             {
               "car_id": 2,
-              "timestamp": 8,
               "pos_x": 25.0,
-              "pos_y": 4.0,
-              "destination": true
+              "pos_y": 4.0
             },
             {
               "car_id": 0,
-              "timestamp": 9,
               "pos_x": 20.0,
-              "pos_y": 15.0,
-              "destination": true
+              "pos_y": 15.0
             },
             {
               "car_id": 1,
-              "timestamp": 10,
+
               "pos_x": 20.0,
-              "pos_y": 18.0,
-              "destination": true
+              "pos_y": 18.0
             },
             {
               "car_id": 0,
-              "timestamp": 12,
               "pos_x": 15.0,
-              "pos_y": 15.0,
-              "destination": true
+              "pos_y": 15.0
             },
             {
               "car_id": 1,
-              "timestamp": 12,
               "pos_x": 20.0,
-              "pos_y": 10.0,
-              "destination": true
+              "pos_y": 10.0
             },
             {
               "car_id": 2,
-              "timestamp": 15.0,
               "pos_x": 25.0,
-              "pos_y": 5.0,
-              "destination": true
+              "pos_y": 5.0
             },
             {
               "car_id": 3,
-              "timestamp": 15.5,
               "pos_x": 11.25,
-              "pos_y": 5,
-              "destination": true
+              "pos_y": 5
             },
             {
               "car_id": 3,
-              "timestamp": 16,
               "pos_x": 17.5,
-              "pos_y": 10,
-              "destination": true
+              "pos_y": 10
             },
             {
               "car_id": 3,
-              "timestamp": 16.5,
               "pos_x": 23.75,
-              "pos_y": 15,
-              "destination": true
+              "pos_y": 15
             },
             {
               "car_id": 3,
-              "timestamp": 17,
               "pos_x": 30,
-              "pos_y": 10,
-              "destination": true
+              "pos_y": 10
             },
             {
               "car_id": 3,
-              "timestamp": 17.5,
               "pos_x": 23.75,
-              "pos_y": 5,
-              "destination": true
+              "pos_y": 5
             },
             {
               "car_id": 3,
-              "timestamp": 18,
               "pos_x": 17.5,
-              "pos_y": 10,
-              "destination": true
+              "pos_y": 10
             },
             {
               "car_id": 3,
-              "timestamp": 18.5,
               "pos_x": 11.25,
-              "pos_y": 15,
-              "destination": true
+              "pos_y": 15
             },
             {
               "car_id": 3,
-              "timestamp": 19,
               "pos_x": 5,
-              "pos_y": 10,
-              "destination": true
+              "pos_y": 10
             },
             {
               "car_id": 3,
-              "timestamp": 19.5,
               "pos_x": 11.25,
-              "pos_y": 5,
-              "destination": true
+              "pos_y": 5
             },
             {
               "car_id": 3,
-              "timestamp": 20,
               "pos_x": 17.5,
-              "pos_y": 10,
-              "destination": true
+              "pos_y": 10
             }
           ],
   "Obstacles":
@@ -222,6 +183,8 @@
   "Channel":
   {
     "latency": 20,
+    "min_latency": 15,
+    "max_latency": 25,
     "error_probability": 0.05
   },
   "CollisionControl":
