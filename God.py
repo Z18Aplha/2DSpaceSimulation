@@ -83,18 +83,21 @@ class God:
                 raise Exception('The path of a car cannot reach outside the canvas.',car_id, timestamp, pos_x, pos_y, self.size[0], self.size[1])
             destination = bool(path_data["destination"])
 
-            if timestamp == 0:
-                raise Exception(
-                    'For a timestamp of 0 you need to change the spawn point of the car, not the path in the Parameters.json file.')
-            elif timestamp > 0:
-                if destination:
-                    self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
-                    self.last_timestamp = max(timestamp, self.last_timestamp)
-                else:
-                    # car.set_waypoint(pos_x, pos_y, timestamp)
-                    pass
-            else:
-                raise Exception('The input value for timestamp cannot be parsed correctly.')
+            #if timestamp == 0:
+            #    raise Exception(
+            #        'For a timestamp of 0 you need to change the spawn point of the car, not the path.txt file.')
+            #elif timestamp > 0:
+            #if destination:
+                #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
+                #self.last_timestamp = max(timestamp, self.last_timestamp)
+                #self.cars[car_id].set_destination(pos_x, pos_y)
+            #else:
+                # car.set_waypoint(pos_x, pos_y, timestamp)
+                #pass
+            #else:
+            #    raise Exception('The input value for timestamp cannot be parsed correctly.')
+
+            self.cars[car_id].set_waypoint(pos_x, pos_y)
 
             # CHECK IF EVERY CAR HAS AT LEAST ONE DESTINATION POINT
         for car in self.cars:
