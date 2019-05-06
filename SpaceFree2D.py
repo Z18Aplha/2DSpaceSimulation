@@ -15,8 +15,12 @@ class SpaceSimulation2D:
         # self.width = self.height * self.px_width / self.px_height
         self.pxm = self.px_width / self.width  # pixel per meter
         self.g = g
+        #### MERGE ####
         self.car_models = []
-        self.obstacles_rect = []
+        self.car_rect = []
+        self.obstacles = []
+        ###############
+
         # WINDOW
         self.window = Tk()
         self.grid = Canvas(bg="black", height=self.px_height, width=self.px_width)
@@ -61,11 +65,12 @@ class SpaceSimulation2D:
             #self.car_models.append([car.id, tag])
 
         for obst in self.g.obstacles:
-            obstrect = self.grid.create_rectangle((obst.spawn[0] - obst.length / 2) * self.pxm,
-                                                  (obst.spawn[1] - obst.width / 2) * self.pxm,
-                                                  (obst.spawn[0] + obst.length / 2) * self.pxm,
-                                                  (obst.spawn[1] + obst.width / 2) * self.pxm, fill=obst.color)
-            self.obstacles_rect.append([obstrect, obst.length, obst.width])
+
+            spawn = []
+            for i in obst.edges:
+                spawn.append(i*self.pxm)
+            obstrect = self.grid.create_polygon(spawn, fill=obst.color),
+            self.obstacles.append([obstrect])
 
         self.window.mainloop()
 
