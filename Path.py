@@ -2,7 +2,7 @@ from Point import Point
 
 class Path:
     def __init__(self, position):
-        p = Point(position[0], position[1], 0, True)
+        p = Point(position[0], position[1])
         self.points = [] 	# list of Point objects
         self.add(p)			# add the spawn point
         # TODO better boundary conditions (hermite) --> WAS HEISST DAS?
