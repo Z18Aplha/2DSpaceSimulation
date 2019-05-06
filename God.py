@@ -85,7 +85,7 @@ class God:
 
             #if timestamp == 0:
             #    raise Exception(
-            #        'For a timestamp of 0 you need to change the spawn point of the car, not the path.txt file.')
+            #        'For a timestamp of 0 you need to change the spawn point of the car)
             #elif timestamp > 0:
             #if destination:
                 #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
