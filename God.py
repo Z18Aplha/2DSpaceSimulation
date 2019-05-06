@@ -14,27 +14,26 @@ class God:
     # maybe: create a log file (CSV Data to copy it to excel etc to show graphs of velocity, acceleration, etc)...
     # ...for presentation
     # current_dir = os.path.dirname(os.path.abspath(__file__))
-    # file_path = os.path.join(current_dir, "path.txt")
     # path_file = pygame.image.load(image_path)
 
-    def __init__(self, dt, c_dt):
+    def __init__(self, parameters):
+        self.parameters = parameters
         self.cars = []  # list of each car in simulation
         self.last_timestamp = 0  # stores the last timestamp - to stop the simulation after it
-        self.size = [30, 20]  # size of the canvas in m
-        self.m2p_factor = 20  # factor to convert from meters to pixels
+        self.size = parameters["God"]["size"]  # size of the canvas in m
+        self.m2p_factor = parameters["God"]["m2p_factor"]  # factor to convert from meters to pixels
         # self.size = [0, 0]         # stores highest x and y values for matching the simulation area
         self.calculation = []  # list of polynomial for a specific period of time --> WHAT DOES THIS MEAN?
-        self.dt = dt  # time between each data point in ms
-        self.c_dt = c_dt  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
+        self.dt = parameters["God"]["dt"]  # time between each data point in ms
+        self.c_dt = parameters["God"]["c_dt"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         self.obstacles = []
 
     def file_read(self):
-
         ############################
         ## INITIALIZE EACH CAR #####
         ############################
-        cars_txt = open("cars.txt", "r")
-        # The file cars.txt consists of 10 columns, separated by commas
+        cars_origin = self.parameters["Cars"]
+        #
         #
         # [car_id,spawn_x,spawn_y,width,length,max_vel_x,max_vel_y,max_acc_x,max_acc_y,color]
         #
@@ -44,34 +43,29 @@ class God:
         # max_vel_x,max_vel_y: Defines the maximum velocities of the car DOES THIS MAKE SENSE? I WOULD RATHER JUST DEFINE A SINGLE VALUE HERE
         # max_acc_x,max_acc_y: Defines the maximum accelerations of the car DOES THIS MAKE SENSE? I WOULD RATHER JUST DEFINE A SINGLE VALUE HERE
         # color:            Defines the car color
-        for line in cars_txt:
-
-            car_data = line.split(',')
-
-            car_id = int(car_data[0])
-            spawn_x = float(car_data[1])
-            spawn_y = float(car_data[2])
+        for car in cars_origin:
+            car_id = int(car["index"])
+            spawn_x = float(car["spawn_x"])
+            spawn_y = float(car["spawn_y"])
             if (spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]):
                 raise Exception('A car cannot spawn outside of canvas.')
-            width = float(car_data[3])
-            length = float(car_data[4])
-            max_vel_x = float(car_data[5])
-            max_vel_y = float(car_data[6])
-            max_acc_x = float(car_data[7])
-            max_acc_y = float(car_data[8])
-            color = str(car_data[9])
-            color = color.replace("\n", "")
-            color = color.replace(" ", "")
+            length = float(car["length"])
+            width = float(car["width"])
+            max_vel_x = float(car["max_vel_x"])
+            max_vel_y = float(car["max_vel_y"])
+            max_acc_x = float(car["max_acc_x"])
+            max_acc_y = float(car["max_acc_y"])
+            color = str(car["color"])
 
-            car = CarFree2D(car_id, spawn_x, spawn_y, width, length, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color,
+            car = CarFree2D(car_id, spawn_x, spawn_y, length, width, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color,
                             self.c_dt)
             self.cars.append(car)
 
         ################################
         ## ASSIGN PATH TO EACH CAR #####
         ################################
-        path_txt = open("path.txt", "r")
-        # The file path.txt consists of 5 columns, separated by commas. Every row consists of a single point within a path.
+        path_origin = self.parameters["Path"]
+        #
         #
         # [car_id,timestamp,pos_x,pos_y,destination]
         #
@@ -80,21 +74,18 @@ class God:
         # pos_x,pos_y:  where does the car need to be? Unit is m
         # destination:  True  = the speed of the car at the specified location is supposed to be zero
         #               False = this is a midway point
-        for line in path_txt:
-
-            path_data = line.split(',')
-
-            car_id = int(path_data[0])
-            #timestamp = float(path_data[1])
-            pos_x = float(path_data[1])
-            pos_y = float(path_data[2])
+        for path_data in path_origin:
+            car_id = int(path_data["car_id"])
+            timestamp = float(path_data["timestamp"])
+            pos_x = float(path_data["pos_x"])
+            pos_y = float(path_data["pos_y"])
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
-                raise Exception('The path of a car cannot reach outside the canvas.')
-            #destination = bool(path_data[4])
+                raise Exception('The path of a car cannot reach outside the canvas.',car_id, timestamp, pos_x, pos_y, self.size[0], self.size[1])
+            destination = bool(path_data["destination"])
 
             #if timestamp == 0:
             #    raise Exception(
-            #        'For a timestamp of 0 you need to change the spawn point of the car, not the path.txt file.')
+            #        'For a timestamp of 0 you need to change the spawn point of the car)
             #elif timestamp > 0:
             #if destination:
                 #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
@@ -118,26 +109,28 @@ class God:
         #############################
         ## INITIALIZE OBSTACLES #####
         #############################
-        obstacles_txt = open("obstacles.txt", "r")
+        obstacles_origin = self.parameters["Obstacles"]
 
-        for line in obstacles_txt:
-
-            obstacle_data = line.split(',')
-
-            spawn_x = float(obstacle_data[0])
-            spawn_y = float(obstacle_data[1])
+        for obst in obstacles_origin:
+            spawn_x = float(obst["corners"][0])
+            spawn_y = float(obst["corners"][1])
             if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
                 raise Exception('An obstacle cannot be defined outside the canvas boundary.')
             # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
-            edges = []
-            for elem in range(len(obstacle_data)-1):
-                edges.append(float(obstacle_data[elem]))
-            color = str(obstacle_data[len(obstacle_data)-1])
-            color = color.replace("\n", "")
-            color = color.replace(" ", "")
+            edges = obst["corners"]
+            color = obst["color"]
 
             obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
             self.obstacles.append(obstacle)
+
+        # Adding outer boundary as obstacles
+        self.obstacles.append(Obstacles2D(0, 0, [0, 0, self.size[0], 0, self.size[0], -1, 0, -1], ''))
+        self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0, self.size[1], 0, 0, -1, 0], ''))
+        self.obstacles.append(Obstacles2D(0, self.size[1]+1, [0, self.size[1]+1, self.size[0], self.size[1]+1,
+                                                              self.size[0], self.size[1], 0, self.size[1]], ''))
+        self.obstacles.append(Obstacles2D(self.size[0], self.size[1], [self.size[0], self.size[1], self.size[0]+1,
+                                                                       self.size[1], self.size[0]+1, 0, self.size[0],
+                                                                       0], ''))
 
     def simulate(self):
         # c_dt... time between each controller input in ms
@@ -153,5 +146,5 @@ class God:
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
 
-        coll = CollisionControl(self, .5)
+        coll = CollisionControl(self)
         coll.check_for_collision()
