@@ -21,11 +21,13 @@ class PathPlanner:
 
     def __init__(self, points):
         self.point_list = points
-        self.x = []
-        self.y = []
+        self.x = []                                         # just for the shape
+        self.y = []                                         # just for the shape
+        self.path = []                                      # shape with timestamp
         self.der1 = []
         self.der2 = []
-        self.dt = 0.001  # step of parameter t (0...1)
+        self.t_to_length = []                               # plot of parameter t to length of spline
+        self.dt = 0.01                                      # step of parameter t (0...1)
 
     def first_der_3(self, b1, b2):
         # returns first derivative of Bernstein Polynomial of degree 3
@@ -118,7 +120,7 @@ class PathPlanner:
         for i in range(0, len(self.x)):
             plt.plot(self.x[i], self.y[i])
 
-        # PLOTTING THE GIVEN WAYPOINTS
+        # PLOTTING THE WAYPOINTS
         for point in self.point_list:
             plt.plot(point.x, point.y, 'bo')
 
@@ -144,11 +146,24 @@ class PathPlanner:
     def get_section_length(self):
         # accuracy of calculation is limited by the chosen 'self.dt' in the generate_3 function (the higher, the better)
         length = []
+        t_to_l_t = []       # just for further operations - to get an l-to-t chart
+        t_to_l_l = []       # just for further operations - to get an l-to-t chart
+        l_ges = 0
+
         for i in range(0, len(self.x)):
             l = 0
             for j in range(0, len(self.x[i]) - 1):
-                l += np.linalg.norm([self.x[i][j] - self.x[i][j + 1], self.y[i][j] - self.y[i][j + 1]])
+                dl = np.linalg.norm([self.x[i][j] - self.x[i][j + 1], self.y[i][j] - self.y[i][j + 1]])
+                l += dl
+                l_ges += dl
+                t_to_l_t.append((i)+(j+1)*self.dt)
+                t_to_l_l.append(l_ges)
             length.append(l)
+
+        self.t_to_length.append(t_to_l_t)
+        self.t_to_length.append(t_to_l_l)
+        plt.plot(self.t_to_length[0], self.t_to_length[1])
+        plt.show()
 
         return length
 

@@ -17,24 +17,26 @@ class Controller:
     def __init__(self, p: Path, max_acceleration, max_velocity, length):
         self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
-        self.length_car = length        # length of the car, needed for steering angle (calculated with curvature)
-        self.path = p               # list with points AND timestamps
-        self.shape = []             # shape of path, the car should follow
-        self.controls = []          # acceleration controls
-        self.steer_control = []     # steering angle controls
+        self.length_car = length  # length of the car, needed for steering angle (calculated with curvature)
+        self.path = p  # list with points AND timestamps
+        self.shape = []  # shape of path, the car should follow
+        self.controls = []  # acceleration controls
+        self.steer_control = []  # steering angle controls
+        self.t_to_length = []  # t-to-length connection
 
-    def calculate_controls(self, path): # currently: beziér curve degree 3
+    def calculate_controls(self, path):  # currently: beziér curve degree 3
         # CREATING NECESSARY VARIABLES
         planner = PathPlanner(path)
-        self.shape = planner.generate_3()       # function generates shape (without timestamps)
-        length = planner.get_section_length()   # length of each section (shape between two waypoints)
-        curvature = planner.get_curvature()     # list of curvature values of the shape - needed for Ackerman steering
-        steering = []                           # steering angle of car
+        self.shape = planner.generate_3()  # function generates shape (without timestamps)
+        length = planner.get_section_length()  # length of each section (shape between two waypoints)
+        self.t_to_length = planner.t_to_length
+        curvature = planner.get_curvature()  # list of curvature values of the shape - needed for Ackerman steering
+        steering = []  # steering angle of car
         for section in curvature:
             for curve in section:
-                steering.append(np.arctan(self.length_car * curve)/np.pi * 180)
-        plt.plot(steering)
-        plt.show()
+                steering.append(np.arctan(self.length_car * curve) / np.pi * 180)
+        # plt.plot(steering)
+        # plt.show()
 
         pass
         # fills the self.controls list with acceleration values
