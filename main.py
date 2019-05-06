@@ -1,16 +1,16 @@
 import time
 from God import God
 from SpaceFree2D import SpaceSimulation2D
+import json
 import matplotlib.pyplot as plt
 from Obstacles2D import Obstacles2D
 
 
 def start_simulation():
-    g = God(20, 75)     # time between each data point, time between each controller input (equidistant in time)
+    parameters = json.load(open("Parameters.json"))
+    g = God(parameters)     # time between each data point, time between each controller input (equidistant in time)
     g.file_read()
     g.simulate() # cubic spline interpolation, equidistant controller
-    #g.simulate(true) #detect collision:true
-    #g.detect_collision()
     s = SpaceSimulation2D(g)  # constructor(height of space in metres, god) --> WHAT DOES "HEIGHT OF SPACE" MEAN?
 
     ax = []
