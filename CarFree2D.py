@@ -7,20 +7,23 @@ from PathPlanner import PathPlanner
 
 
 class CarFree2D:
-    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color, c_dt):
+    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, c_dt):
         # PHYSICAL PROPERTIES
         self.color = color
         self.id = id
         self.spawn = [spawn_x, spawn_y]
+        self.direction = angle
         self.position = []      # in m - later: instantiation of 2d space with dates in metres --> WAS HEISST DAS?
         self.length = size_x    # in m
         self.width = size_y     # in m
         # VELOCITY
-        self.velocity = []      # in m/s
-        self.max_velocity = [max_vel_x, max_vel_y]  # [vx, vy] in m/s
+        self.velocity = 0      # in m/s
+        self.max_velocity = max_vel  # [vx, vy] in m/s
         # ACCELERATION
-        self.acceleration = []  # [ax, ay] in m/s^2
-        self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay] in m/s^2
+        self.acceleration = 0  # [ax, ay] in m/s^2
+        self.max_acceleration = max_acc  # [ax, ay] in m/s^2
+        # STEERING
+        self.steering = 0
         # PATH
         self.path_shape = []  # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)
@@ -103,7 +106,7 @@ class CarFree2D:
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
     # SIMULATION
-    def update(self):
+    def update(self):   # TODO refactor this function --> acc and vel no vector anymore
 
         # VELOCITY
         vx = Polynomial(0, 0, 0)
@@ -112,13 +115,14 @@ class CarFree2D:
         velocity_x_old = 0
         velocity_y_old = 0
         for control in self.controller.controls:
-            dt = control[2] - t_old
+            # Control: [timestamp, ax, ay]
+            dt = control[0] - t_old
             velocity_x_old = vx.get_value(dt)
             velocity_y_old = vy.get_value(dt)
-            vx = control[0].integration().add_constant(velocity_x_old)
-            vy = control[1].integration().add_constant(velocity_y_old)
-            t_old = control[2]
-            self.velocity.append([vx, vy, control[2]])
+            vx = control[1].integration().add_constant(velocity_x_old)
+            vy = control[2].integration().add_constant(velocity_y_old)
+            t_old = control[0]
+            self.velocity.append([vx, vy, control[0]])
 
         # POSITION
         sx = Polynomial(0, 0, self.spawn[0])
@@ -133,6 +137,11 @@ class CarFree2D:
             t_old = function[2]
             self.position.append([sx, sy, function[2]])
 
+    def update2(self, x):
+        # new Update routine
+        # recursive with controller
+        pass
+
     def create_spline(self):
-        self.controller.calculate_controls(self.path.points)
+        self.controller.calculate_controls_equidistant(self.path.points, self.c_dt)
         self.path_shape = self.controller.shape
