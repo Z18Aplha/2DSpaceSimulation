@@ -3,6 +3,7 @@ from math import ceil
 from Point import Point
 from Obstacles2D import Obstacles2D
 from CollisionControl import CollisionControl
+from Channel import Channel
 import time
 
 class God:
@@ -24,6 +25,8 @@ class God:
         self.m2p_factor = parameters["God"]["m2p_factor"]  # factor to convert from meters to pixels
         # self.size = [0, 0]         # stores highest x and y values for matching the simulation area
         self.calculation = []  # list of polynomial for a specific period of time --> WHAT DOES THIS MEAN?
+        self.simulation = []
+        self.controller_data = []
         self.dt = parameters["God"]["dt"]  # time between each data point in ms
         self.c_dt = parameters["God"]["c_dt"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         self.obstacles = []
@@ -76,12 +79,10 @@ class God:
         #               False = this is a midway point
         for path_data in path_origin:
             car_id = int(path_data["car_id"])
-            timestamp = float(path_data["timestamp"])
             pos_x = float(path_data["pos_x"])
             pos_y = float(path_data["pos_y"])
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
-                raise Exception('The path of a car cannot reach outside the canvas.',car_id, timestamp, pos_x, pos_y, self.size[0], self.size[1])
-            destination = bool(path_data["destination"])
+                raise Exception('The path of a car cannot reach outside the canvas.',car_id, pos_x, pos_y, self.size[0], self.size[1])
 
             #if timestamp == 0:
             #    raise Exception(
@@ -134,8 +135,8 @@ class God:
 
     def simulate(self):
         # c_dt... time between each controller input in ms
-        for car in self.cars:
-            car.create_spline()
+        #for car in self.cars:
+            #car.create_spline()
 
         n = ceil(self.last_timestamp * 1000 / self.dt)
 
@@ -148,3 +149,23 @@ class God:
 
         coll = CollisionControl(self)
         coll.check_for_collision()
+
+        c = Channel(self.parameters)
+        for s in self.calculation:
+            s_new = c.send(s[:])
+            self.simulation.append(s_new)
+
+        for dat in self.simulation:
+            data = dat[:]
+            data[1] = ceil(data[1] / (self.c_dt / 1000)) * (self.c_dt / 1000)
+            if not data[-1]:
+                if len(self.controller_data) <= len(self.cars):
+                    for i in range(2, len(data) - 2):
+                        data[i] = 0
+                else:
+                    for obj in reversed(self.controller_data):
+                        if data[0] == obj[0]:
+                            for i in range(2, len(obj)-2):
+                                data[i] = obj[i]
+            del data[-1]
+            self.controller_data.append(data)

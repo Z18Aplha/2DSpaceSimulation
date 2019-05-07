@@ -184,11 +184,12 @@
   {
     "latency": 20,
     "min_latency": 15,
-    "max_latency": 25,
-    "error_probability": 0.05
+    "max_latency": 55,
+    "error_probability": 0.5
   },
   "CollisionControl":
   {
-    "spacing": 0.5
+    "spacing": 0.5,
+    "polling_dif": 0.1
   }
 }

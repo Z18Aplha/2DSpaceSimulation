@@ -21,6 +21,7 @@ def start_simulation():
     vy = []
     t = []
 
+    print("Without Channel:")
     for data in g.calculation:
         print(data)
         t.append(data[1])
@@ -30,6 +31,14 @@ def start_simulation():
         vy.append(data[5])
         ax.append(data[-1])
         ay.append(data[-2])
+
+    print("With Channel:")
+    for data in g.simulation:
+        print(data)
+
+    print("Controller Data:")
+    for data in g.controller_data:
+        print(data)
 
     #plt.plot(t, ax)
     #plt.plot(t, ay)
