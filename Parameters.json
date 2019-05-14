@@ -30,8 +30,8 @@
         "angle":  0,
         "length": 2,
         "width": 4,
-        "max_vel": 50,
-        "max_acc": 30,
+        "max_vel": 20,
+        "max_acc": 100,
         "color": "burlywood3"
       },
       {
@@ -41,8 +41,8 @@
         "angle":  0,
         "length": 2,
         "width": 1,
-        "max_vel": 50,
-        "max_acc": 30,
+        "max_vel": 20,
+        "max_acc": 100,
         "color": "purple"
       },
       {
@@ -52,8 +52,8 @@
         "angle":  0,
         "length": 5,
         "width": 2,
-        "max_vel": 50,
-        "max_acc": 30,
+        "max_vel": 20,
+        "max_acc": 200,
         "color": "red"
       }
     ],

@@ -60,12 +60,15 @@ class Controller:
         # TODO works not for (to) short shapes --> need to be added!!!
         control_prep = []
         distance = 0
-        for i in range(0, n_ac_max):
-            a = Polynomial(0, 0, self.max_acceleration)
-            t = round(i * c_dt, 7)
+        t = 0
+        a = Polynomial(0, 0, self.max_acceleration)
+        i = 0
+        for k in range(0, n_ac_max):
+            t = round(k * c_dt, 7)
             distance = a.integration().integration().get_value(t)
             vel = a.integration().get_value(t)
-            control_prep.append([round(i * c_dt, 7), a, round(distance, 7), vel])
+            control_prep.append([t, a, round(distance, 7), vel])
+            i = k
 
         distance = a.integration().integration().get_value(t + c_dt)
         vel = a.integration().get_value(t + c_dt)
@@ -96,7 +99,7 @@ class Controller:
             distance += distance_diff
 
         # ADD DEC VALUES TO THE LIST
-        a_value = vel ** 2 / (2 * (length_abs - distance))
+        a_value = abs(vel ** 2 / (2 * (length_abs - distance)))
         n = j
         vel_ref = vel
         distance_ref = distance
@@ -113,5 +116,12 @@ class Controller:
         t_stop = t + vel/a_value
         s_stop = s + -a_value*0.5*(vel/a_value)**2 + vel*(vel/a_value)
         control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
+
+        # CONTROLLER GETS COORDINATES FOR EACH ENTRY IN CONTROL PREP
+        for i in range(1, len(control_prep)-1):
+            xy = planner.get_coordinates(control_prep[i][2])
+            control_prep[i] = [control_prep[i][0], control_prep[i][1], control_prep[i][3], xy[0], xy[1]]
+
+
         pass
         # fills the self.controls list with acceleration values
