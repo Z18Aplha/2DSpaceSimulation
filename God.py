@@ -52,15 +52,14 @@ class God:
             spawn_y = float(car["spawn_y"])
             if (spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]):
                 raise Exception('A car cannot spawn outside of canvas.')
+            angle = float(car["angle"])
             length = float(car["length"])
             width = float(car["width"])
-            max_vel_x = float(car["max_vel_x"])
-            max_vel_y = float(car["max_vel_y"])
-            max_acc_x = float(car["max_acc_x"])
-            max_acc_y = float(car["max_acc_y"])
+            max_vel = float(car["max_vel"])
+            max_acc = float(car["max_acc"])
             color = str(car["color"])
 
-            car = CarFree2D(car_id, spawn_x, spawn_y, length, width, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color,
+            car = CarFree2D(car_id, spawn_x, spawn_y, angle, length, width, max_vel, max_acc, color,
                             self.c_dt)
             self.cars.append(car)
 
@@ -133,10 +132,10 @@ class God:
                                                                        self.size[1], self.size[0]+1, 0, self.size[0],
                                                                        0], ''))
 
-    def simulate(self):
+    def simulate_backup(self):
         # c_dt... time between each controller input in ms
-        #for car in self.cars:
-            #car.create_spline()
+        for car in self.cars:
+            car.create_spline()
 
         n = ceil(self.last_timestamp * 1000 / self.dt)
 
@@ -169,3 +168,31 @@ class God:
                                 data[i] = obj[i]
             del data[-1]
             self.controller_data.append(data)
+
+    def simulate(self):
+        # c_dt... time between each controller input in ms
+        for car in self.cars:
+            car.create_spline()
+
+        for car in self.cars:
+            car.update2()
+
+
+        n = 0
+        cars = len(self.cars)
+        lists_ended = 0
+        while lists_ended < cars:
+            lists_ended = 0
+            for car in self.cars:
+                try:
+                    entry = [car.id, car.position[n][0], car.position[n][1], car.position[n][2]]
+                    self.calculation.append(entry)
+                except IndexError:
+                    lists_ended += 1
+                    pass
+            n+=1
+        pass
+
+
+        #coll = CollisionControl(self)
+        #coll.check_for_collision()
