@@ -7,12 +7,19 @@ import numpy as np
 from math import ceil
 from PathPlanner import PathPlanner
 import matplotlib.pyplot as plt
+import math as m
+
+
+def angle(p1: Point, p2: Point):
+    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
+    return phi
 
 
 class Controller:
     # assumption: acceleration is a instant value of the car --> using max_acceleration and max_deceleration
     # each car has its own controller
     # class with path planning and path following algorithms
+
 
     def __init__(self, p: Path, max_acceleration, max_velocity, length):
         self.max_velocity = max_velocity
@@ -46,7 +53,7 @@ class Controller:
         s_ac = Polynomial(0, -self.max_acceleration, self.max_velocity).integration().get_value(
             t_ac)  # way of deceleration
         # t_ac = np.ndarray.tolist(t_ac)
-        c_dt = c_dt / 1000
+        c_dt = c_dt
 
         if t_ac % c_dt == 0:
             adaption_needed = False
@@ -61,21 +68,23 @@ class Controller:
         control_prep = []
         distance = 0
         t = 0
-        a = Polynomial(0, 0, self.max_acceleration)
+        a = self.max_acceleration
         i = 0
         for k in range(0, n_ac_max):
             t = round(k * c_dt, 7)
-            distance = a.integration().integration().get_value(t)
-            vel = a.integration().get_value(t)
+            #distance = a.integration().integration().get_value(t)
+            distance = 0.5*a*t**2
+            vel = a*t
             control_prep.append([t, a, round(distance, 7), vel])
             i = k
 
-        distance = a.integration().integration().get_value(t + c_dt)
-        vel = a.integration().get_value(t + c_dt)
+        #distance = a.integration().integration().get_value(t + c_dt)
+        distance = 0.5*a*t**2
+        vel = a*(t + c_dt)
 
         if adaption_needed:
             a_value = ((t_ac - c_dt * n_ac_max) * self.max_acceleration) / (2 * c_dt)
-            a = Polynomial(0, 0, a_value)
+            a = a_value
             distance_ref = distance
             vel_ref = vel
             for j in range(n_ac_max, n_ac_max + 2):
@@ -95,7 +104,7 @@ class Controller:
         distance_diff = vel * c_dt
         while distance < length_abs - distance_ref - distance_diff:
             j += 1
-            control_prep.append([round(j * c_dt, 7), Polynomial(0, 0, 0), round(distance, 7), vel])
+            control_prep.append([round(j * c_dt, 7), 0, round(distance, 7), vel])
             distance += distance_diff
 
         # ADD DEC VALUES TO THE LIST
@@ -106,7 +115,7 @@ class Controller:
         while vel >= 0:
             j += 1
             t = round(((j - n) * c_dt), 7)
-            control_prep.append([round(j * c_dt, 7), Polynomial(0, 0, -a_value), round(distance, 7), vel])
+            control_prep.append([round(j * c_dt, 7), -a_value, round(distance, 7), vel])
             vel -= a_value * c_dt
             distance = distance_ref + -a_value * 0.5 * t ** 2 + vel_ref * t
 
@@ -118,10 +127,32 @@ class Controller:
         control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
 
         # CONTROLLER GETS COORDINATES FOR EACH ENTRY IN CONTROL PREP
-        for i in range(1, len(control_prep)-1):
+        for i in range(0, len(control_prep)-1):
             xy = planner.get_coordinates(control_prep[i][2])
             control_prep[i] = [control_prep[i][0], control_prep[i][1], control_prep[i][3], xy[0], xy[1]]
 
+        # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
+        # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]
+        stop = False
+        for control in control_prep:
+            if control[2] == 'CAR STOPPED':
+                pass
+            else:
+                t = control[0]
+                est_x = control[3]
+                est_y = control[4]
+                est_point = Point(est_x, est_y)
+                acc = control[1]
+                try:
+                    next_x = control_prep[control_prep.index(control)+1][3]
+                    next_y = control_prep[control_prep.index(control)+1][4]
+                    next_point = Point(next_x, next_y)
+                    dir = angle(est_point, next_point)
+                except IndexError:
+                    stop = True
+
+            self.controls.append([t, est_x, est_y, acc, dir, stop])
+        self.controls.pop(-1)
 
         pass
         # fills the self.controls list with acceleration values

@@ -144,7 +144,7 @@ class PathPlanner:
         for n in range(0, len(self.b1) - 1):
             plt.plot([self.b2[n][0], self.b1[n + 1][0]], [self.b2[n][1], self.b1[n + 1][1]], 'k--')
 
-        plt.show()
+        #plt.show()
 
         curve = [self.x, self.y]  # multiple arrays: [0:x, 1:y][n:section][i:value]
 
@@ -173,7 +173,7 @@ class PathPlanner:
         self.t_to_length.append(t_to_l_t)
         self.t_to_length.append(t_to_l_l)
         plt.plot(self.t_to_length[0], self.t_to_length[1])
-        plt.show()
+        #plt.show()
 
         return length
 

@@ -129,19 +129,48 @@ class God:
                                                                        self.size[1], self.size[0]+1, 0, self.size[0],
                                                                        0], ''))
 
+    def simulate_backup(self):
+        # c_dt... time between each controller input in ms
+        for car in self.cars:
+            car.create_spline()
+
+        n = ceil(self.last_timestamp / self.dt)
+
+        for car in self.cars:
+            car.update2()
+
+        for i in range(0, n + 1):
+            for car in self.cars:
+                self.calculation.append(car.status(i * self.dt))
+
+
+        coll = CollisionControl(self)
+        coll.check_for_collision()
+
     def simulate(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
             car.create_spline()
 
-        n = ceil(self.last_timestamp * 1000 / self.dt)
-
         for car in self.cars:
-            car.update()
+            car.update2()
 
-        for i in range(0, n + 1):
+
+        n = 0
+        cars = len(self.cars)
+        lists_ended = 0
+        while lists_ended < cars:
+            lists_ended = 0
             for car in self.cars:
-                self.calculation.append(car.status(i * self.dt / 1000))
+                try:
+                    entry = [car.id, car.position[n][0], car.position[n][1], car.position[n][2]]
+                    self.calculation.append(entry)
+                except IndexError:
+                    lists_ended += 1
+                    pass
+            n+=1
+        pass
 
-        coll = CollisionControl(self)
-        coll.check_for_collision()
+
+        #coll = CollisionControl(self)
+        #coll.check_for_collision()
