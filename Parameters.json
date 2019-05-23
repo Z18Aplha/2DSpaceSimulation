@@ -32,7 +32,7 @@
         "width": 4,
         "max_vel": 20,
         "max_acc": 100,
-        "color": "burlywood3"
+        "color": "#CDAA7D"
       },
       {
         "index": 2,
@@ -184,7 +184,8 @@
   },
   "CollisionControl":
   {
-    "spacing": 0.5,
+    "obstacle_spacing": 0.5,
+    "car_spacing": 0.5,
     "polling_dif": 0.1
   }
 }

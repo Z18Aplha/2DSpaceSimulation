@@ -4,6 +4,7 @@ from Point import Point
 from Obstacles2D import Obstacles2D
 from CollisionControl import CollisionControl
 from Channel import Channel
+from Polynomial import Polynomial
 import time
 
 class God:
@@ -59,7 +60,7 @@ class God:
             max_acc = float(car["max_acc"])
             color = str(car["color"])
 
-            car = CarFree2D(car_id, spawn_x, spawn_y, angle, length, width, max_vel, max_acc, color,
+            car = CarFree2D(car_id, spawn_x, spawn_y, length, width, angle, max_vel, max_acc, color,
                             self.c_dt)
             self.cars.append(car)
 
@@ -82,20 +83,6 @@ class God:
             pos_y = float(path_data["pos_y"])
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
                 raise Exception('The path of a car cannot reach outside the canvas.',car_id, pos_x, pos_y, self.size[0], self.size[1])
-
-            #if timestamp == 0:
-            #    raise Exception(
-            #        'For a timestamp of 0 you need to change the spawn point of the car)
-            #elif timestamp > 0:
-            #if destination:
-                #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
-                #self.last_timestamp = max(timestamp, self.last_timestamp)
-                #self.cars[car_id].set_destination(pos_x, pos_y)
-            #else:
-                # car.set_waypoint(pos_x, pos_y, timestamp)
-                #pass
-            #else:
-            #    raise Exception('The input value for timestamp cannot be parsed correctly.')
 
             self.cars[car_id].set_waypoint(pos_x, pos_y)
 
@@ -124,14 +111,13 @@ class God:
             self.obstacles.append(obstacle)
 
         # Adding outer boundary as obstacles
-        self.obstacles.append(Obstacles2D(0, 0, [0, 0, self.size[0], 0, self.size[0], -1, 0, -1], ''))
-        self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0, self.size[1], 0, 0, -1, 0], ''))
+        self.obstacles.append(Obstacles2D(0, 0, [0, 0, self.size[0], 0, self.size[0], -1, 0, -1], 'black'))
+        self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0, self.size[1], 0, 0, -1, 0], 'black'))
         self.obstacles.append(Obstacles2D(0, self.size[1]+1, [0, self.size[1]+1, self.size[0], self.size[1]+1,
-                                                              self.size[0], self.size[1], 0, self.size[1]], ''))
+                                                              self.size[0], self.size[1], 0, self.size[1]], 'black'))
         self.obstacles.append(Obstacles2D(self.size[0], self.size[1], [self.size[0], self.size[1], self.size[0]+1,
                                                                        self.size[1], self.size[0]+1, 0, self.size[0],
-                                                                       0], ''))
-
+                                                                       0], 'black'))
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
@@ -142,12 +128,14 @@ class God:
         for car in self.cars:
             car.update()
 
+        coll = CollisionControl(self)
+
         for i in range(0, n + 1):
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
-
-        coll = CollisionControl(self)
-        coll.check_for_collision()
+            if coll.check_for_collision_sim() is False:
+                print("Collision occourred . . . Aborting")
+                break
 
         c = Channel(self.parameters)
         for s in self.calculation:
@@ -177,7 +165,6 @@ class God:
         for car in self.cars:
             car.update2()
 
-
         n = 0
         cars = len(self.cars)
         lists_ended = 0
@@ -193,6 +180,6 @@ class God:
             n+=1
         pass
 
-
+        self.last_timestamp = self.calculation[-1][1]
         #coll = CollisionControl(self)
         #coll.check_for_collision()

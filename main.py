@@ -1,7 +1,8 @@
-import time
 from God import God
 from SpaceFree2D import SpaceSimulation2D
+from SpaceFree2D_OpenGL import SpaceFree2DOpenGL
 import json
+import imageio
 import matplotlib.pyplot as plt
 from Obstacles2D import Obstacles2D
 
@@ -11,7 +12,8 @@ def start_simulation():
     g = God(parameters)     # time between each data point, time between each controller input (equidistant in time)
     g.file_read()
     g.simulate() # cubic spline interpolation, equidistant controller
-    s = SpaceSimulation2D(g)  # constructor(height of space in metres, god) --> WHAT DOES "HEIGHT OF SPACE" MEAN?
+    #s = SpaceSimulation2D(g)  # constructor(height of space in metres, god) --> WHAT DOES "HEIGHT OF SPACE" MEAN?
+    s2 = SpaceFree2DOpenGL(g)
 
     ax = []
     ay = []
@@ -50,7 +52,17 @@ def start_simulation():
 
     #plt.show()
 
-    s.create_space()
+    #s.create_space()
+    s2.create_space()
+
+    im = 0
+    writer = imageio.get_writer('animation.gif', fps=s2.fps)
+    for i in range(s2.counter):
+        im = imageio.imread('video/'+str(i)+'.png')
+        writer.append_data(im)
+    for i in range(2*s2.fps):
+        writer.append_data(im)
+    writer.close()
 
 
 if __name__ == "__main__":
