@@ -187,4 +187,4 @@ class God:
 
         self.last_timestamp = self.calculation[-1][1]
         coll = CollisionControl(self)
-        coll.check_for_collision()
+        #coll.check_for_collision()
