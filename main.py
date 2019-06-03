@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from Obstacles2D import Obstacles2D
 
-
+'''
+BACKUP
+'''
 def start_simulation():
     parameters = json.load(open("Parameters.json"))
     g = God(parameters)     # time between each data point, time between each controller input (equidistant in time)
