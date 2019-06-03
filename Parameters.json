@@ -1,14 +1,15 @@
 {
   "God":
     {
-    "size": [30, 20],
-    "m2p_factor": 20,
-    "dt": 20,
-    "c_dt": 1
+      "size": [30, 20],
+      "m2p_factor": 20,
+      "dt": 20,
+      "c_dt": 1
     },
   "SpaceFree2D":
     {
-    "px_width": 600
+      "px_width": 600,
+      "fps": 50
     },
   "Cars":
     [
@@ -52,8 +53,8 @@
         "angle":  0,
         "length": 5,
         "width": 2,
-        "max_vel": 20,
-        "max_acc": 200,
+        "max_vel": 10,
+        "max_acc": 10,
         "color": "red"
       }
     ],
@@ -184,8 +185,8 @@
   },
   "CollisionControl":
   {
-    "obstacle_spacing": 0.5,
+    "obstacle_spacing": 0.1,
     "car_spacing": 0.5,
-    "polling_dif": 0.1
+    "polling_dif": 0.001
   }
 }

@@ -126,23 +126,23 @@ class PathPlanner:
             self.y.append(section_y)
             i += 1
 
-        # PLOTTING THE GIVEN CURVE
-        for i in range(0, len(self.x)):
-            plt.plot(self.x[i], self.y[i])
-
-        # PLOTTING THE WAYPOINTS
-        for point in self.point_list:
-            plt.plot(point.x, point.y, 'bo')
-
-        # PLOTTING THE HELP POINTS
-        for point1 in self.b1:
-            plt.plot(point1[0], point1[1], 'ro')
-        for point2 in self.b2:
-            plt.plot(point2[0], point2[1], 'co')
-
-        # PLOTTING THE TANGENT
-        for n in range(0, len(self.b1) - 1):
-            plt.plot([self.b2[n][0], self.b1[n + 1][0]], [self.b2[n][1], self.b1[n + 1][1]], 'k--')
+        # # PLOTTING THE GIVEN CURVE
+        # for i in range(0, len(self.x)):
+        #     plt.plot(self.x[i], self.y[i])
+        #
+        # # PLOTTING THE WAYPOINTS
+        # for point in self.point_list:
+        #     plt.plot(point.x, point.y, 'bo')
+        #
+        # # PLOTTING THE HELP POINTS
+        # for point1 in self.b1:
+        #     plt.plot(point1[0], point1[1], 'ro')
+        # for point2 in self.b2:
+        #     plt.plot(point2[0], point2[1], 'co')
+        #
+        # # PLOTTING THE TANGENT
+        # for n in range(0, len(self.b1) - 1):
+        #     plt.plot([self.b2[n][0], self.b1[n + 1][0]], [self.b2[n][1], self.b1[n + 1][1]], 'k--')
 
         #plt.show()
 
@@ -172,7 +172,7 @@ class PathPlanner:
 
         self.t_to_length.append(t_to_l_t)
         self.t_to_length.append(t_to_l_l)
-        plt.plot(self.t_to_length[0], self.t_to_length[1])
+        #plt.plot(self.t_to_length[0], self.t_to_length[1])
         #plt.show()
 
         return length

@@ -4,6 +4,7 @@ from SpaceFree2D_OpenGL import SpaceFree2DOpenGL
 import json
 import imageio
 import matplotlib.pyplot as plt
+import numpy as np
 from Obstacles2D import Obstacles2D
 
 
@@ -63,7 +64,13 @@ def start_simulation():
     for i in range(2*s2.fps):
         writer.append_data(im)
     writer.close()
+    t = np.linspace(0, len(s2.time), len(s2.time))
+    plt.plot(t, s2.time)
+    plt.show()
+    plt.plot(t, s2.currentfps)
+    plt.show()
 
 
 if __name__ == "__main__":
     start_simulation()
+
