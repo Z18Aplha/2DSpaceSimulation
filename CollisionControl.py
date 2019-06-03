@@ -79,22 +79,22 @@ class CollisionControl:
             self.coll_obstacles.append(self.make_obstacle_poly(obst))
         for obst in self.coll_obstacles:
             self.coll_obst_cages.append(self.safety_zone(obst))
-        calc = self.god.last_timestamp/(self.god.dt/1000)
+        calc = self.god.last_timestamp/(self.god.dt)
         for i in range(int(calc)+1):
             for car_col in self.god.cars:
                 c = self.make_car_poly(car_col, i*self.god.dt)
                 for ob in self.coll_obstacles:
                     if collide(c, ob):
-                        print("Car ", car_col.id, "Hard Collision with obstacle @", i*(self.god.dt/1000))
+                        print("Car ", car_col.id, "Hard Collision with obstacle @", i*(self.god.dt))
                     else:
                         for ob_cage in self.coll_obst_cages:
                             if collide(c, ob_cage):
-                                print("Car", car_col.id, "Soft Collision with obstacle @", i*(self.god.dt/1000))
+                                print("Car", car_col.id, "Soft Collision with obstacle @", i*(self.god.dt))
                 cars_temp = self.god.cars[:]
                 cars_temp.remove(car_col)
                 for car in cars_temp:
                     c2 = self.make_car_poly(car, i*self.god.dt)
                     if collide(c, c2):
-                        print("Car", car_col.id, "Hard Collision with car", car.id, "@", i*(self.god.dt/1000))
+                        print("Car", car_col.id, "Hard Collision with car", car.id, "@", i*(self.god.dt))
             for j in range(len(self.god.cars)):
                 del self.list[0]

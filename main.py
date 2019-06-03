@@ -23,13 +23,13 @@ def start_simulation():
 
     for data in g.calculation:
         print(data)
-        t.append(data[1])
-        sx.append(data[2])
-        sy.append(data[3])
-        vx.append(data[4])
-        vy.append(data[5])
-        ax.append(data[-1])
-        ay.append(data[-2])
+        #t.append(data[1])
+        #sx.append(data[2])
+        #sy.append(data[3])
+        #vx.append(data[4])
+        #vy.append(data[5])
+        #ax.append(data[-1])
+        #ay.append(data[-2])
 
     #plt.plot(t, ax)
     #plt.plot(t, ay)

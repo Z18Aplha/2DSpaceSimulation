@@ -1,32 +1,35 @@
 from Controller import Controller
 from Path import Path
-from math import sqrt
+from math import sqrt, cos, sin
 from Point import Point
 from Polynomial import Polynomial
 from PathPlanner import PathPlanner
 
 
 class CarFree2D:
-    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, max_vel_x, max_vel_y, max_acc_x, max_acc_y, color, c_dt):
+    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, c_dt):
         # PHYSICAL PROPERTIES
         self.color = color
         self.id = id
         self.spawn = [spawn_x, spawn_y]
+        self.direction = angle
         self.position = []      # in m - later: instantiation of 2d space with dates in metres --> WAS HEISST DAS?
         self.length = size_x    # in m
         self.width = size_y     # in m
         # VELOCITY
         self.velocity = []      # in m/s
-        self.max_velocity = [max_vel_x, max_vel_y]  # [vx, vy] in m/s
+        self.max_velocity = max_vel  # [vx, vy] in m/s
         # ACCELERATION
-        self.acceleration = []  # [ax, ay] in m/s^2
-        self.max_acceleration = [max_acc_x, max_acc_y]  # [ax, ay] in m/s^2
+        self.acceleration = 0  # [ax, ay] in m/s^2
+        self.max_acceleration = max_acc  # [ax, ay] in m/s^2
+        # STEERING
+        self.steering = 0
         # PATH
         self.path_shape = []  # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)
         self.waypoints = []     # list for the given points with the
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity, self.length)
-        self.c_dt = c_dt
+        self.c_dt = c_dt/1000
 
     # GETTER
     def get_position(self):
@@ -103,7 +106,7 @@ class CarFree2D:
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
     # SIMULATION
-    def update(self):
+    def update(self):   # TODO refactor this entry --> acc and vel no vector anymore
 
         # VELOCITY
         vx = Polynomial(0, 0, 0)
@@ -112,27 +115,61 @@ class CarFree2D:
         velocity_x_old = 0
         velocity_y_old = 0
         for control in self.controller.controls:
-            dt = control[2] - t_old
+            # Control: [timestamp, ax, ay]
+            dt = control[0] - t_old
             velocity_x_old = vx.get_value(dt)
             velocity_y_old = vy.get_value(dt)
-            vx = control[0].integration().add_constant(velocity_x_old)
-            vy = control[1].integration().add_constant(velocity_y_old)
-            t_old = control[2]
-            self.velocity.append([vx, vy, control[2]])
+            vx = control[1].integration().add_constant(velocity_x_old)
+            vy = control[2].integration().add_constant(velocity_y_old)
+            t_old = control[0]
+            self.velocity.append([vx, vy, control[0]])
 
         # POSITION
         sx = Polynomial(0, 0, self.spawn[0])
         sy = Polynomial(0, 0, self.spawn[1])
         t_old = 0
-        for function in self.velocity:
-            dt = function[2] - t_old
+        for entry in self.velocity:
+            dt = entry[2] - t_old
             sx_old = sx.get_value(dt)
             sy_old = sy.get_value(dt)
-            sx = function[0].integration().add_constant(sx_old)
-            sy = function[1].integration().add_constant(sy_old)
-            t_old = function[2]
-            self.position.append([sx, sy, function[2]])
+            sx = entry[0].integration().add_constant(sx_old)
+            sy = entry[1].integration().add_constant(sy_old)
+            t_old = entry[2]
+            self.position.append([sx, sy, entry[2]])
+
+    def update2(self):
+        # new Update routine
+
+        # POSITION and VELOCITY
+        x = self.spawn[0]
+        y = self.spawn[1]
+        t = 0
+        v = 0
+        for control in self.controller.controls:
+            # Control: [timestamp, est_x, est_y, a, dir, stop]
+            stop = control[5]
+            t = round(control[0], 7)
+            direction = control[4]
+            a = control[3]
+            self.velocity.append([t, v, direction])  # [t, v, dir]
+            self.position.append([t, x, y])
+            if stop:
+                t_stop = t - v / a
+                dt = t-t_stop
+                x += (0.5*a*dt**2 + v*dt)*cos(direction)
+                y += (0.5*a*dt**2 + v*dt)*sin(direction)
+                t = t_stop
+                a = 0
+                v = 0
+                self.velocity.append([t, v, direction])  # [t, v, dir]
+                self.position.append([t, x, y])
+                break
+            x += (0.5*a*self.c_dt**2 + v*self.c_dt) * cos(direction)
+            y += (0.5*a*self.c_dt**2 + v*self.c_dt) * sin(direction)
+            v += a * self.c_dt
+
+        pass
 
     def create_spline(self):
-        self.controller.calculate_controls(self.path.points)
+        self.controller.calculate_controls_equidistant(self.path.points, self.c_dt)
         self.path_shape = self.controller.shape

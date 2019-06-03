@@ -4,7 +4,7 @@
     "size": [30, 20],
     "m2p_factor": 20,
     "dt": 20,
-    "c_dt": 75
+    "c_dt": 20
     },
   "SpaceFree2D":
     {
@@ -16,48 +16,44 @@
         "index": 0,
         "spawn_x": 5.0,
         "spawn_y": 5.0,
+        "angle": 0,
         "length": 4.0,
         "width": 2.0,
-        "max_vel_x": 50,
-        "max_vel_y": 50,
-        "max_acc_x": 30,
-        "max_acc_y": 30,
+        "max_vel": 40,
+        "max_acc": 80,
         "color": "#FFAF00"
       },
       {
         "index": 1,
         "spawn_x": 10,
         "spawn_y": 10,
+        "angle":  0,
         "length": 2,
         "width": 4,
-        "max_vel_x": 50,
-        "max_vel_y": 50,
-        "max_acc_x": 30,
-        "max_acc_y": 30,
+        "max_vel": 20,
+        "max_acc": 100,
         "color": "burlywood3"
       },
       {
         "index": 2,
         "spawn_x": 20,
         "spawn_y": 10,
+        "angle":  0,
         "length": 2,
         "width": 1,
-        "max_vel_x": 50,
-        "max_vel_y": 50,
-        "max_acc_x": 30,
-        "max_acc_y": 30,
+        "max_vel": 20,
+        "max_acc": 100,
         "color": "purple"
       },
       {
         "index": 3,
         "spawn_x": 5,
         "spawn_y": 10,
+        "angle":  0,
         "length": 5,
         "width": 2,
-        "max_vel_x": 50,
-        "max_vel_y": 50,
-        "max_acc_x": 30,
-        "max_acc_y": 30,
+        "max_vel": 20,
+        "max_acc": 200,
         "color": "red"
       }
     ],
@@ -95,7 +91,6 @@
             },
             {
               "car_id": 1,
-
               "pos_x": 20.0,
               "pos_y": 18.0
             },

@@ -43,7 +43,7 @@ class SpaceSimulation2D:
             x1 = (car.spawn[0] - car.length / 2) * self.pxm
             y1 = (car.spawn[1] - car.width / 2) * self.pxm
             x2 = (car.spawn[0] + car.length / 2) * self.pxm
-            y2 = (car.spawn[1] + car.width / 2) * self.pxm
+            y2 = (car.spawn[1] + car.width / 2) * self.pxm#
 
             # tag is used for group rect and wheels (to stick them together)
             # attention: turns will be a problem - car is no 'picture' what can be turned
@@ -58,11 +58,13 @@ class SpaceSimulation2D:
             wheel2 = self.grid.create_oval(x2-radius/2, y1+ radius/2, x2-2.5*radius, y1+2.5*radius, fill='white', tags = tag)
             wheel3 = self.grid.create_oval(x2-radius/2, y2- radius/2, x2-2.5*radius, y2-2.5*radius, fill='white', tags = tag)
             wheel4 = self.grid.create_oval(x1+radius/2, y2- radius/2, x1+2.5*radius, y2-2.5*radius, fill='white', tags = tag)
-            arrow = self.grid.create_text(car.spawn[0]*self.pxm, car.spawn[1]*self.pxm, text = '-->', tags = tag)
+            arrow = self.grid.create_text(car.spawn[0]*self.pxm, car.spawn[1]*self.pxm, text = '-->', tags = tag, fill='white')
 
             #self.car_models.append([car.id + 300, wheel1, 2, 2])
             #self.car_models.append([car.id, rect, car.length, car.width])
             #self.car_models.append([car.id, tag])
+
+
 
         for obst in self.g.obstacles:
 
@@ -138,7 +140,7 @@ class SpaceSimulation2D:
         y_old = []
         # counts the number of runs through the loop, needed for better performing window updates
         i = 0
-        # number of cars in simulation, updated in the following loop
+        # number of cars in simulation, updated in the following l/oop
         car_count = 0
         for data in self.g.calculation:
             self.label_time["text"] = data[1]
@@ -157,11 +159,12 @@ class SpaceSimulation2D:
                 dx = data[2] - x_old[data[0]]
                 dy = data[3] - y_old[data[0]]
                 # move whole car and set this point to x_old and y_old
-                self.grid.move(car_tag, dx, dy)
+                self.grid.move(car_tag, dx*self.pxm, dy*self.pxm)
                 x_old[data[0]] = data[2]
                 y_old[data[0]] = data[3]
             if i % car_count == car_count - 1:
                 # window will be updated when the last car of the timestamp is refreshed
                 self.window.update()    # TODO this routine is very slow. ideas?
+                time.sleep(0.00001)
             i += 1
         self.label_status["text"] = "animation done!"
