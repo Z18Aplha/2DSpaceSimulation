@@ -4,7 +4,7 @@
     "size": [30, 20],
     "m2p_factor": 20,
     "dt": 20,
-    "c_dt": 1
+    "c_dt": 20
     },
   "SpaceFree2D":
     {
