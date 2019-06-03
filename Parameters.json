@@ -1,14 +1,15 @@
 {
   "God":
     {
-    "size": [30, 20],
-    "m2p_factor": 20,
-    "dt": 20,
-    "c_dt": 20
+      "size": [30, 20],
+      "m2p_factor": 20,
+      "dt": 20,
+      "c_dt": 1
     },
   "SpaceFree2D":
     {
-    "px_width": 600
+      "px_width": 600,
+      "fps": 50
     },
   "Cars":
     [
@@ -32,7 +33,7 @@
         "width": 4,
         "max_vel": 20,
         "max_acc": 100,
-        "color": "burlywood3"
+        "color": "#CDAA7D"
       },
       {
         "index": 2,
@@ -52,8 +53,8 @@
         "angle":  0,
         "length": 5,
         "width": 2,
-        "max_vel": 20,
-        "max_acc": 200,
+        "max_vel": 10,
+        "max_acc": 10,
         "color": "red"
       }
     ],
@@ -179,11 +180,13 @@
   {
     "latency": 20,
     "min_latency": 15,
-    "max_latency": 25,
-    "error_probability": 0.05
+    "max_latency": 55,
+    "error_probability": 0.5
   },
   "CollisionControl":
   {
-    "spacing": 0.5
+    "obstacle_spacing": 0.1,
+    "car_spacing": 0.5,
+    "polling_dif": 0.001
   }
 }

@@ -3,6 +3,8 @@ from math import ceil
 from Point import Point
 from Obstacles2D import Obstacles2D
 from CollisionControl import CollisionControl
+from Channel import Channel
+from Polynomial import Polynomial
 import time
 
 class God:
@@ -24,9 +26,12 @@ class God:
         self.m2p_factor = parameters["God"]["m2p_factor"]  # factor to convert from meters to pixels
         # self.size = [0, 0]         # stores highest x and y values for matching the simulation area
         self.calculation = []  # list of polynomial for a specific period of time --> WHAT DOES THIS MEAN?
+        self.simulation = []
+        self.controller_data = []
         self.dt = parameters["God"]["dt"]  # time between each data point in ms
         self.c_dt = parameters["God"]["c_dt"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         self.obstacles = []
+        self.collisions = 10000
 
     def file_read(self):
         ############################
@@ -56,7 +61,7 @@ class God:
             max_acc = float(car["max_acc"])
             color = str(car["color"])
 
-            car = CarFree2D(car_id, spawn_x, spawn_y, angle, length, width, max_vel, max_acc, color,
+            car = CarFree2D(car_id, spawn_x, spawn_y, length, width, angle, max_vel, max_acc, color,
                             self.c_dt)
             self.cars.append(car)
 
@@ -80,20 +85,6 @@ class God:
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
                 raise Exception('The path of a car cannot reach outside the canvas.',car_id, pos_x, pos_y, self.size[0], self.size[1])
 
-            #if timestamp == 0:
-            #    raise Exception(
-            #        'For a timestamp of 0 you need to change the spawn point of the car)
-            #elif timestamp > 0:
-            #if destination:
-                #self.cars[car_id].set_destination(pos_x, pos_y, timestamp)
-                #self.last_timestamp = max(timestamp, self.last_timestamp)
-                #self.cars[car_id].set_destination(pos_x, pos_y)
-            #else:
-                # car.set_waypoint(pos_x, pos_y, timestamp)
-                #pass
-            #else:
-            #    raise Exception('The input value for timestamp cannot be parsed correctly.')
-
             self.cars[car_id].set_waypoint(pos_x, pos_y)
 
             # CHECK IF EVERY CAR HAS AT LEAST ONE DESTINATION POINT
@@ -108,44 +99,68 @@ class God:
         #############################
         obstacles_origin = self.parameters["Obstacles"]
 
-        for obst in obstacles_origin:
-            spawn_x = float(obst["corners"][0])
-            spawn_y = float(obst["corners"][1])
-            if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
-                raise Exception('An obstacle cannot be defined outside the canvas boundary.')
-            # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
-            edges = obst["corners"]
-            color = obst["color"]
-
-            obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
-            self.obstacles.append(obstacle)
-
-        # Adding outer boundary as obstacles
-        self.obstacles.append(Obstacles2D(0, 0, [0, 0, self.size[0], 0, self.size[0], -1, 0, -1], ''))
-        self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0, self.size[1], 0, 0, -1, 0], ''))
-        self.obstacles.append(Obstacles2D(0, self.size[1]+1, [0, self.size[1]+1, self.size[0], self.size[1]+1,
-                                                              self.size[0], self.size[1], 0, self.size[1]], ''))
-        self.obstacles.append(Obstacles2D(self.size[0], self.size[1], [self.size[0], self.size[1], self.size[0]+1,
-                                                                       self.size[1], self.size[0]+1, 0, self.size[0],
-                                                                       0], ''))
-
+        # for obst in obstacles_origin:
+        #     spawn_x = float(obst["corners"][0])
+        #     spawn_y = float(obst["corners"][1])
+        #     if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
+        #         raise Exception('An obstacle cannot be defined outside the canvas boundary.')
+        #     # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
+        #     edges = obst["corners"]
+        #     color = obst["color"]
+        #
+        #     obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
+        #     self.obstacles.append(obstacle)
+        #
+        # # Adding outer boundary as obstacles
+        # # Bottom
+        # self.obstacles.append(Obstacles2D(0.1, 0.1, [0.1, 0.1, self.size[0], 0.1, self.size[0], -1, 0.1, -1], 'white'))
+        # # Left
+        # self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0.1, self.size[1], 0.1, 0.1, -1, 0.1], 'white'))
+        # # Top
+        # self.obstacles.append(Obstacles2D(0.1, self.size[1]+1, [0.1, self.size[1]+1, self.size[0]-0.1, self.size[1]+1,
+        #                                                       self.size[0]-0.1, self.size[1]-0.1, 0.1, self.size[1]-0.1], 'white'))
+        # # Right
+        # self.obstacles.append(Obstacles2D(self.size[0]-0.1, self.size[1]-0.1, [self.size[0]-0.1, self.size[1], self.size[0]+1,
+        #                                                                self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
+        #                                                                0], 'white'))
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
             car.create_spline()
 
-        n = ceil(self.last_timestamp / self.dt)
+        n = ceil(self.last_timestamp * 1000 / self.dt)
 
         for car in self.cars:
-            car.update2()
+            car.update()
+
+        coll = CollisionControl(self)
 
         for i in range(0, n + 1):
             for car in self.cars:
-                self.calculation.append(car.status(i * self.dt))
+                self.calculation.append(car.status(i * self.dt / 1000))
+            if coll.check_for_collision_sim() is False:
+                print("Collision occourred . . . Aborting")
+                break
 
+        c = Channel(self.parameters)
+        for s in self.calculation:
+            s_new = c.send(s[:])
+            self.simulation.append(s_new)
 
-        coll = CollisionControl(self)
-        coll.check_for_collision()
+        for dat in self.simulation:
+            data = dat[:]
+            data[1] = ceil(data[1] / (self.c_dt / 1000)) * (self.c_dt / 1000)
+            if not data[-1]:
+                if len(self.controller_data) <= len(self.cars):
+                    for i in range(2, len(data) - 2):
+                        data[i] = 0
+                else:
+                    for obj in reversed(self.controller_data):
+                        if data[0] == obj[0]:
+                            for i in range(2, len(obj)-2):
+                                data[i] = obj[i]
+            del data[-1]
+            self.controller_data.append(data)
 
     def simulate(self):
         # c_dt... time between each controller input in ms
@@ -155,7 +170,6 @@ class God:
         for car in self.cars:
             car.update2()
 
-
         n = 0
         cars = len(self.cars)
         lists_ended = 0
@@ -163,7 +177,7 @@ class God:
             lists_ended = 0
             for car in self.cars:
                 try:
-                    entry = [car.id, car.position[n][0], car.position[n][1], car.position[n][2]]
+                    entry = [car.id, car.position[n][0], car.position[n][1], car.position[n][2], car.velocity[n][2]]
                     self.calculation.append(entry)
                 except IndexError:
                     lists_ended += 1
@@ -171,6 +185,6 @@ class God:
             n+=1
         pass
 
-
-        #coll = CollisionControl(self)
-        #coll.check_for_collision()
+        self.last_timestamp = self.calculation[-1][1]
+        coll = CollisionControl(self)
+        coll.check_for_collision()
