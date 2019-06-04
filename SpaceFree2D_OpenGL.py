@@ -176,6 +176,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 x_old = car.spawn[0]
                 y_old = car.spawn[1]
                 for n in range(0, sections):
+                    c = car.path_shape[0]
                     number_of_values = len(car.path_shape[0][n])
                     for i in range(0, number_of_values):
                         x = car.path_shape[0][n][i]

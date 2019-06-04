@@ -66,9 +66,9 @@ def start_simulation():
     writer.close()
     t = np.linspace(0, len(s2.time), len(s2.time))
     plt.plot(t, s2.time)
-    plt.show()
+    #plt.show()
     plt.plot(t, s2.currentfps)
-    plt.show()
+    #plt.show()
 
 
 if __name__ == "__main__":

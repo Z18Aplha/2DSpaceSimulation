@@ -6,6 +6,8 @@ from CollisionControl import CollisionControl
 from Channel import Channel
 from Polynomial import Polynomial
 import time
+from EventQueue import EventQueue
+from Event import Event
 
 class God:
 
@@ -138,7 +140,7 @@ class God:
         for i in range(0, n + 1):
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
-            if coll.check_for_collision_sim() is False:
+            if coll.check_for_collision() is False:
                 print("Collision occourred . . . Aborting")
                 break
 
@@ -163,10 +165,30 @@ class God:
             self.controller_data.append(data)
 
     def simulate(self):
+
+        eventqueue = EventQueue(self)
+
+        for car in self.cars:
+            event = Event(0, car, (car,), lambda: eventqueue.create_spline)
+            eventqueue.add_event(event)
+
+        for event in eventqueue.events:
+            eventqueue.exe(event.function(), event.parameters)
+
+        '''
+        for car in self.cars:
+            id = car.id
+            a= 45
+            ev = Event(0, car, lambda id: eventqueue.create_spline(id))
+            eventqueue.add_event(ev)
+
+        for event in range(len(eventqueue.events)):
+            print(eventqueue.execute(event))
+        
         # c_dt... time between each controller input in ms
         for car in self.cars:
             car.create_spline()
-
+        '''
         for car in self.cars:
             car.update2()
 
