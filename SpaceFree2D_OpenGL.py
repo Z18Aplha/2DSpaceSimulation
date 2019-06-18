@@ -5,6 +5,7 @@ from matplotlib import colors
 import math
 import time
 from pyglet import clock
+import imageio
 
 
 class SpaceFree2DOpenGL(pyglet.window.Window):
@@ -18,87 +19,148 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.g = g
         self.car_models = []
         self.car_rect = []
+        self.front = []
+        self.back = []
+        for cars in g.cars:
+            self.front.append('yellow')
+            self.back.append('red')
         self.obstacles = []
         self.coordinates = []
         self.timestamp = 0
         self.dataset = g.calculation[:]
         self.start = True
+        self.stop = g.last_timestamp
         self.counter = 0
+        self.blink_counter = 0
         self.fps = g.parameters["SpaceFree2D"]["fps"]
         super().__init__(caption="AVG Simulator", width=self.px_width, height=self.px_height, visible=True)
         self.time = []
         self.currentfps = []
+        self.collided = False
+        self.running = True
+        self.animSprite = 0
 
     def on_draw(self):
-        t1 = time.time()
-        # self.show_interpolated_shape()
-        # self.show_shape()
-        self.show_shape_optimized()
-        for obs in self.g.obstacles:
-            glColor3f(colors.to_rgb(obs.color)[0], colors.to_rgb(obs.color)[1], colors.to_rgb(obs.color)[2])
-            glBegin(GL_QUADS)
-            glVertex2f(obs.edges[0] * self.pxm, obs.edges[1] * self.pxm)
-            glVertex2f(obs.edges[2] * self.pxm, obs.edges[3] * self.pxm)
-            glVertex2f(obs.edges[4] * self.pxm, obs.edges[5] * self.pxm)
-            glVertex2f(obs.edges[6] * self.pxm, obs.edges[7] * self.pxm)
-            glEnd()
-        self.show_waypoints()
+        if self.running:
+            if self.collided:
+                if self.blink_counter >= (self.fps / 5):
+                    self.blink_counter = 0
+                    if self.front[self.g.collisions[1]] == 'white':
+                        self.front[self.g.collisions[1]] = 'yellow'
+                        self.front[self.g.collisions[2]] = 'yellow'
+                        self.back[self.g.collisions[1]] = 'red'
+                        self.back[self.g.collisions[2]] = 'red'
+                    else:
+                        self.front[self.g.collisions[1]] = 'white'
+                        self.front[self.g.collisions[2]] = 'white'
+                        self.back[self.g.collisions[1]] = 'white'
+                        self.back[self.g.collisions[2]] = 'white'
 
-        for car in self.g.cars:
-            if self.start:
-                x1 = (car.spawn[0] - car.length / 2) * self.pxm
-                y1 = (car.spawn[1] - car.width / 2) * self.pxm
-                x2 = (car.spawn[0] + car.length / 2) * self.pxm
-                y2 = (car.spawn[1] - car.width / 2) * self.pxm
-                x3 = (car.spawn[0] + car.length / 2) * self.pxm
-                y3 = (car.spawn[1] + car.width / 2) * self.pxm
-                x4 = (car.spawn[0] - car.length / 2) * self.pxm
-                y4 = (car.spawn[1] + car.width / 2) * self.pxm
-                self.coordinates.append([x1, y1, x2, y2, x3, y3, x4, y4])
-            try:
-                glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
-            except ValueError:
-                clr = self.hex_to_rgb(car.color)
-                glColor3f(clr[0], clr[1], clr[2])
-            glBegin(GL_QUADS)
-            i = self.g.cars.index(car)
-            glVertex2f(self.coordinates[i][0], self.coordinates[i][1])  # x1, y1
-            glVertex2f(self.coordinates[i][2], self.coordinates[i][3])  # x2, y2
-            glVertex2f(self.coordinates[i][4], self.coordinates[i][5])  # x3, y3
-            glVertex2f(self.coordinates[i][6], self.coordinates[i][7])  # x4, y4
-            glEnd()
+                self.blink_counter += 1
 
-            # Wheels
-            radius = min(car.length, car.width) * self.pxm / 6
-            self.circle(self.coordinates[i][0] + 1.5 * radius, self.coordinates[i][1] + 1.5 * radius, radius)
-            self.circle(self.coordinates[i][2] - 1.5 * radius, self.coordinates[i][3] + 1.5 * radius, radius)
-            self.circle(self.coordinates[i][4] - 1.5 * radius, self.coordinates[i][5] - 1.5 * radius, radius)
-            self.circle(self.coordinates[i][6] + 1.5 * radius, self.coordinates[i][7] - 1.5 * radius, radius)
-            pyglet.text.Label(str(car.id), font_name='Times New Roman', font_size=10,
-                              x=self.coordinates[i][0]+(self.coordinates[i][2]-self.coordinates[i][0])/2,
-                              y=self.coordinates[i][1]+(self.coordinates[i][7]-self.coordinates[i][1])/2,
-                              anchor_x='center', anchor_y='center').draw()
+            t1 = time.time()
+            # self.show_interpolated_shape()
+            # self.show_shape()
+            self.show_shape_optimized()
+            for obs in self.g.obstacles:
+                glColor3f(colors.to_rgb(obs.color)[0], colors.to_rgb(obs.color)[1], colors.to_rgb(obs.color)[2])
+                glBegin(GL_QUADS)
+                glVertex2f(obs.edges[0] * self.pxm, obs.edges[1] * self.pxm)
+                glVertex2f(obs.edges[2] * self.pxm, obs.edges[3] * self.pxm)
+                glVertex2f(obs.edges[4] * self.pxm, obs.edges[5] * self.pxm)
+                glVertex2f(obs.edges[6] * self.pxm, obs.edges[7] * self.pxm)
+                glEnd()
+            self.show_waypoints()
 
-        label = pyglet.text.Label(str(self.timestamp),
-                                  font_name='Times New Roman',
-                                  font_size=10,
-                                  x=3, y=3,
-                                  anchor_x='left', anchor_y='bottom')
-        label.draw()
+            for car in self.g.cars:
+                i = self.g.cars.index(car)
+                if self.start:
+                    x1 = (car.spawn[0] - car.length / 2) * self.pxm
+                    y1 = (car.spawn[1] - car.width / 2) * self.pxm
+                    x2 = (car.spawn[0] + car.length / 2) * self.pxm
+                    y2 = (car.spawn[1] - car.width / 2) * self.pxm
+                    x3 = (car.spawn[0] + car.length / 2) * self.pxm
+                    y3 = (car.spawn[1] + car.width / 2) * self.pxm
+                    x4 = (car.spawn[0] - car.length / 2) * self.pxm
+                    y4 = (car.spawn[1] + car.width / 2) * self.pxm
+                    self.coordinates.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                try:
+                    glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
+                except ValueError:
+                    clr = self.hex_to_rgb(car.color)
+                    glColor3f(clr[0], clr[1], clr[2])
+                glBegin(GL_QUADS)
+                glVertex2f(self.coordinates[i][0], self.coordinates[i][1])  # x1, y1
+                glVertex2f(self.coordinates[i][2], self.coordinates[i][3])  # x2, y2
+                glVertex2f(self.coordinates[i][4], self.coordinates[i][5])  # x3, y3
+                glVertex2f(self.coordinates[i][6], self.coordinates[i][7])  # x4, y4
+                glEnd()
 
-        # while animating save current frame
-        if self.timestamp <= self.g.last_timestamp:
-            pyglet.image.get_buffer_manager().get_color_buffer().save('video/' + str(self.counter) + '.png')
-            self.counter += 1
-        t2 = time.time()
-        self.time.append(t2-t1)
-        self.currentfps.append(clock.get_fps())
+                # Wheels
+                radius = min(car.length, car.width) * self.pxm / 6
+                self.circle(self.coordinates[i][0] + 1.5 * radius, self.coordinates[i][1] + 1.5 * radius, radius)
+                self.circle(self.coordinates[i][2] - 1.5 * radius, self.coordinates[i][3] + 1.5 * radius, radius)
+                self.circle(self.coordinates[i][4] - 1.5 * radius, self.coordinates[i][5] - 1.5 * radius, radius)
+                self.circle(self.coordinates[i][6] + 1.5 * radius, self.coordinates[i][7] - 1.5 * radius, radius)
+                pyglet.text.Label(str(car.id), font_name='Times New Roman', font_size=10,
+                                  x=self.coordinates[i][0]+(self.coordinates[i][2]-self.coordinates[i][0])/2,
+                                  y=self.coordinates[i][1]+(self.coordinates[i][7]-self.coordinates[i][1])/2,
+                                  anchor_x='center', anchor_y='center').draw()
 
-        pyglet.text.Label("Animating",
-                          font_name='Times New Roman',
-                          font_size=10,
-                          x=self.width - 80, y=3,
-                          anchor_x='left', anchor_y='bottom').draw()
+                # Lights
+                size = (car.width / 10) * self.pxm
+                # Front
+                glColor3f(colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2])
+                glBegin(GL_QUADS)
+                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-2*size)
+                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-2*size)
+                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-size)
+                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-size)
+                glEnd()
+                glBegin(GL_QUADS)
+                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + 2 * size)
+                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + 2 * size)
+                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + size)
+                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + size)
+                glEnd()
+                # Back
+                glColor3f(colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1], colors.to_rgb(self.back[i])[2])
+                glBegin(GL_QUADS)
+                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - 2 * size)
+                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - 2 * size)
+                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - size)
+                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - size)
+                glEnd()
+                glBegin(GL_QUADS)
+                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + 2 * size)
+                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + 2 * size)
+                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + size)
+                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + size)
+                glEnd()
+
+            label = pyglet.text.Label(str(self.timestamp),
+                                      font_name='Times New Roman',
+                                      font_size=10,
+                                      x=3, y=3,
+                                      anchor_x='left', anchor_y='bottom')
+            label.draw()
+
+            # while animating save current frame
+            if self.timestamp <= self.g.last_timestamp:
+                pyglet.image.get_buffer_manager().get_color_buffer().save('video/' + str(self.counter) + '.png')
+                self.counter += 1
+            t2 = time.time()
+            self.time.append(t2-t1)
+            self.currentfps.append(clock.get_fps())
+
+            pyglet.text.Label("Animating",
+                              font_name='Times New Roman',
+                              font_size=10,
+                              x=self.width - 80, y=3,
+                              anchor_x='left', anchor_y='bottom').draw()
+        else:
+            self.clear()
+            self.animSprite.draw()
 
     def circle(self, x, y, radius):
         iterations = int(2 * radius * math.pi)
@@ -194,15 +256,30 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                         x_old = x
                         y_old = y
             pyglet.image.get_buffer_manager().get_color_buffer().save('video/background.png')
-        pyglet.resource.image("video/background.png").blit(0, 0)
+        pyglet.gl.glClearColor(0, 0, 0, 0)
+        image = pyglet.image.load("video/background.png")
+        sprite = pyglet.sprite.Sprite(image, 0, 0)
+        sprite.draw()
 
     def update(self, dt):
-        if self.timestamp > self.g.last_timestamp:
+        if self.timestamp > self.stop:
             pyglet.clock.unschedule(self.update)
-            pyglet.app.exit()
+            im = 0
+            writer = imageio.get_writer('animation.gif', fps=self.fps)
+            for i in range(self.counter):
+                im = imageio.imread('video/' + str(i) + '.png')
+                writer.append_data(im)
+            for i in range(2 * self.fps):
+                writer.append_data(im)
+            writer.close()
+
+            animation = pyglet.image.load_animation('animation.gif')
+            self.animSprite = pyglet.sprite.Sprite(animation)
+            self.running = False
+            #pyglet.app.exit()
         self.clear()
         self.start = False
-        if self.timestamp <= self.g.collisions:
+        if self.timestamp <= self.g.collisions[0]:
             i = 0
             while i < len(self.dataset):
                 data = self.dataset[i]
@@ -222,8 +299,25 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     if data[1] < self.timestamp:
                         i += 1
                     else:
+                        if self.dataset[i-1][1] < self.timestamp:
+                            print(self.dataset[i-1], self.timestamp)
+                            data = self.dataset[i-1]
+                            car = self.g.cars[data[0]]
+                            x1 = (data[2] - car.length / 2) * self.pxm
+                            y1 = (data[3] - car.width / 2) * self.pxm
+                            x2 = (data[2] + car.length / 2) * self.pxm
+                            y2 = (data[3] - car.width / 2) * self.pxm
+                            x3 = (data[2] + car.length / 2) * self.pxm
+                            y3 = (data[3] + car.width / 2) * self.pxm
+                            x4 = (data[2] - car.length / 2) * self.pxm
+                            y4 = (data[3] + car.width / 2) * self.pxm
+                            self.coordinates[data[0]] = [x1, y1, x2, y2, x3, y3, x4, y4]
                         break
-            self.timestamp = round(self.timestamp + dt, 3)
+
+        else:
+            self.stop = self.g.collisions[0]+4
+            self.collided = True
+        self.timestamp = round(self.timestamp + 1/self.fps, 3)
 
     def create_space(self):
         print(self.g.last_timestamp)
