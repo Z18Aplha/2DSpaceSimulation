@@ -6,6 +6,8 @@ from CollisionControl import CollisionControl
 from Channel import Channel
 from Polynomial import Polynomial
 import time
+from EventQueue import EventQueue
+from Event import Event
 
 class God:
 
@@ -31,7 +33,7 @@ class God:
         self.dt = parameters["God"]["dt"]  # time between each data point in ms
         self.c_dt = parameters["God"]["c_dt"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         self.obstacles = []
-        self.collisions = 10000
+        self.collisions = [10000, 10000, 10000]
 
     def file_read(self):
         ############################
@@ -99,30 +101,30 @@ class God:
         #############################
         obstacles_origin = self.parameters["Obstacles"]
 
-        # for obst in obstacles_origin:
-        #     spawn_x = float(obst["corners"][0])
-        #     spawn_y = float(obst["corners"][1])
-        #     if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
-        #         raise Exception('An obstacle cannot be defined outside the canvas boundary.')
-        #     # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
-        #     edges = obst["corners"]
-        #     color = obst["color"]
-        #
-        #     obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
-        #     self.obstacles.append(obstacle)
-        #
-        # # Adding outer boundary as obstacles
-        # # Bottom
-        # self.obstacles.append(Obstacles2D(0.1, 0.1, [0.1, 0.1, self.size[0], 0.1, self.size[0], -1, 0.1, -1], 'white'))
-        # # Left
-        # self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0.1, self.size[1], 0.1, 0.1, -1, 0.1], 'white'))
-        # # Top
-        # self.obstacles.append(Obstacles2D(0.1, self.size[1]+1, [0.1, self.size[1]+1, self.size[0]-0.1, self.size[1]+1,
-        #                                                       self.size[0]-0.1, self.size[1]-0.1, 0.1, self.size[1]-0.1], 'white'))
-        # # Right
-        # self.obstacles.append(Obstacles2D(self.size[0]-0.1, self.size[1]-0.1, [self.size[0]-0.1, self.size[1], self.size[0]+1,
-        #                                                                self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
-        #                                                                0], 'white'))
+        for obst in obstacles_origin:
+            spawn_x = float(obst["corners"][0])
+            spawn_y = float(obst["corners"][1])
+            if spawn_x < 0 or spawn_x > self.size[0] or spawn_y < 0 or spawn_y > self.size[1]:
+                raise Exception('An obstacle cannot be defined outside the canvas boundary.')
+            # THIS CODE NEEDS TO BE UPDATED IN ORDER TO SUPPORT POLYGONS!
+            edges = obst["corners"]
+            color = obst["color"]
+
+            obstacle = Obstacles2D(spawn_x, spawn_y, edges, color)
+            self.obstacles.append(obstacle)
+
+        # Adding outer boundary as obstacles
+        # Bottom
+        self.obstacles.append(Obstacles2D(0.1, 0.1, [0.1, 0.1, self.size[0], 0.1, self.size[0], -1, 0.1, -1], 'white'))
+        # Left
+        self.obstacles.append(Obstacles2D(-1, self.size[1], [-1, self.size[1], 0.1, self.size[1], 0.1, 0.1, -1, 0.1], 'white'))
+        # Top
+        self.obstacles.append(Obstacles2D(0.1, self.size[1]+1, [0.1, self.size[1]+1, self.size[0]-0.1, self.size[1]+1,
+                                                              self.size[0]-0.1, self.size[1]-0.1, 0.1, self.size[1]-0.1], 'white'))
+        # Right
+        self.obstacles.append(Obstacles2D(self.size[0]-0.1, self.size[1]-0.1, [self.size[0]-0.1, self.size[1], self.size[0]+1,
+                                                                       self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
+                                                                       0], 'white'))
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
@@ -138,7 +140,7 @@ class God:
         for i in range(0, n + 1):
             for car in self.cars:
                 self.calculation.append(car.status(i * self.dt / 1000))
-            if coll.check_for_collision_sim() is False:
+            if coll.check_for_collision() is False:
                 print("Collision occourred . . . Aborting")
                 break
 
@@ -163,10 +165,30 @@ class God:
             self.controller_data.append(data)
 
     def simulate(self):
+
+        eventqueue = EventQueue(self)
+
+        for car in self.cars:
+            event = Event(0, car, (car,), lambda: eventqueue.create_spline)
+            eventqueue.add_event(event)
+
+        for event in eventqueue.events:
+            eventqueue.exe(event.function(), event.parameters)
+
+        '''
+        for car in self.cars:
+            id = car.id
+            a= 45
+            ev = Event(0, car, lambda id: eventqueue.create_spline(id))
+            eventqueue.add_event(ev)
+
+        for event in range(len(eventqueue.events)):
+            print(eventqueue.execute(event))
+        
         # c_dt... time between each controller input in ms
         for car in self.cars:
             car.create_spline()
-
+        '''
         for car in self.cars:
             car.update2()
 

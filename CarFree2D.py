@@ -173,3 +173,4 @@ class CarFree2D:
     def create_spline(self):
         self.controller.calculate_controls_equidistant(self.path.points, self.c_dt)
         self.path_shape = self.controller.shape
+        pass

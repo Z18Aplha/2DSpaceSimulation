@@ -6,6 +6,7 @@ import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 from Obstacles2D import Obstacles2D
+import pyglet
 
 
 def start_simulation():
@@ -56,21 +57,14 @@ def start_simulation():
     #s.create_space()
     s2.create_space()
 
-    im = 0
-    writer = imageio.get_writer('animation.gif', fps=s2.fps)
-    for i in range(s2.counter):
-        im = imageio.imread('video/'+str(i)+'.png')
-        writer.append_data(im)
-    for i in range(2*s2.fps):
-        writer.append_data(im)
-    writer.close()
     t = np.linspace(0, len(s2.time), len(s2.time))
     plt.plot(t, s2.time)
-    plt.show()
+    #plt.show()
     plt.plot(t, s2.currentfps)
-    plt.show()
+    #plt.show()
 
 
 if __name__ == "__main__":
     start_simulation()
+
 
