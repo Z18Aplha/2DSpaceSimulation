@@ -2,6 +2,7 @@ from collision import *
 from math import sqrt
 import God
 import CarFree2D
+import Lib as lib
 
 
 class CollisionControl:
@@ -101,38 +102,38 @@ class CollisionControl:
     def check_for_collision(self):
         self.collision_free = True
         self.list = self.god.calculation[:]
-        calc = self.list[-1][1]/(self.god.dt/1000)
+        calc = self.list[-1][1]/(lib.dt/1000)
         for i in range(int(calc)+1):
             cars_temp = self.coll_cars[:]
             for car_col in self.coll_cars:
                 if car_col[1] < 0 or i == 0:
-                    c = self.make_car_poly(car_col[0], i*self.god.dt)
+                    c = self.make_car_poly(car_col[0], i*lib.dt)
                     c_cage = self.safety_zone(c, self.car_spacing)
                     for ob_cage in self.coll_obst_cages:
                         if collide(c_cage, ob_cage):
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, self.coll_obstacles[self.coll_obst_cages.index(ob_cage)]):
-                                print("Car ", car_col[0].id, "Hard Collision with obstacle @", round(i*(self.god.dt/1000), 3))
+                                print("Car ", car_col[0].id, "Hard Collision with obstacle @", round(i*(lib.dt/1000), 3))
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(self.god.dt/1000), car_col[0].id, car_col[0].id]
+                                    self.god.collisions = [i*(lib.dt/1000), car_col[0].id, car_col[0].id]
                             else:
-                                print("Car", car_col[0].id, "Soft Collision with obstacle @", i * round((self.god.dt / 1000), 3))
+                                print("Car", car_col[0].id, "Soft Collision with obstacle @", i * round((lib.dt / 1000), 3))
                     cars_temp.remove(car_col)
                     for car in cars_temp:
-                        c2 = self.make_car_poly(car[0], i*self.god.dt)
+                        c2 = self.make_car_poly(car[0], i*lib.dt)
                         c2_cage = self.safety_zone(c2, self.car_spacing)
                         if collide(c_cage, c2_cage):
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, c2):
                                 print("Car", car_col[0].id, "Hard Collision with car", car[0].id, "@",
-                                      round(i*(self.god.dt/1000)), 3)
+                                      round(i*(lib.dt/1000)), 3)
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(self.god.dt/1000), car_col[0].id, car[0].id]
+                                    self.god.collisions = [i*(lib.dt/1000), car_col[0].id, car[0].id]
                             else:
                                 print("Car", car_col[0].id, "Soft Collision with car", car[0].id, "@",
-                                      round(i * (self.god.dt / 1000)), 3)
+                                      round(i * (lib.dt / 1000)), 3)
                     car_col[1] = self.polling_dif
-                car_col[1] -= abs(self.list[i][4])*(self.god.dt/1000)
+                car_col[1] -= abs(self.list[i][4])*(lib.dt/1000)
             for j in range(len(self.god.cars)):
                 del self.list[0]
         if self.collision_free:

@@ -4,16 +4,25 @@ from math import sqrt, cos, sin
 from Point import Point
 from Polynomial import Polynomial
 from PathPlanner import PathPlanner
+import numpy as np
+from Event import Event
+import math as m
+import Lib as lib
+
+def angle(p1: Point, p2: Point):
+    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
+    return phi
 
 
 class CarFree2D:
-    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, c_dt):
+    def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, ts):
         # PHYSICAL PROPERTIES
         self.color = color
         self.id = id
         self.spawn = [spawn_x, spawn_y]
+        self.position = []
         self.direction = angle
-        self.position = []      # in m - later: instantiation of 2d space with dates in metres --> WAS HEISST DAS?
+        self.last_position = [spawn_x, spawn_y]
         self.length = size_x    # in m
         self.width = size_y     # in m
         # VELOCITY
@@ -24,17 +33,19 @@ class CarFree2D:
         self.max_acceleration = max_acc  # [ax, ay] in m/s^2
         # STEERING
         self.steering = 0
+        self.direction = 0
         # PATH
-        self.path_shape = []  # shape of the planned path (without exact timestamp)
+        self.shape = []  # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)
         self.waypoints = []     # list for the given points with the
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity, self.length)
-        self.c_dt = c_dt/1000
+        self.ts = ts/1000
+        self.t_to_length = []
+        # CONTROLS
+        self.controls = []
+        self.time_last_control = 0
 
     # GETTER
-    def get_position(self):
-        return self.position
-
     def get_speed(self, absolute):  # absolute is boolean - true returns absolute value, false vectorial speed
         if absolute:
             return sqrt(self.velocity[0] * self.velocity[0] + self.velocity[1] * self.velocity[1])
@@ -145,7 +156,7 @@ class CarFree2D:
         y = self.spawn[1]
         t = 0
         v = 0
-        for control in self.controller.controls:
+        for control in self.controls:
             # Control: [timestamp, est_x, est_y, a, dir, stop]
             stop = control[5]
             t = round(control[0], 7)
@@ -164,13 +175,160 @@ class CarFree2D:
                 self.velocity.append([t, v, direction])  # [t, v, dir]
                 self.position.append([t, x, y])
                 break
-            x += (0.5*a*self.c_dt**2 + v*self.c_dt) * cos(direction)
-            y += (0.5*a*self.c_dt**2 + v*self.c_dt) * sin(direction)
-            v += a * self.c_dt
+            x += (0.5*a*self.ts**2 + v*self.ts) * cos(direction)
+            y += (0.5*a*self.ts**2 + v*self.ts) * sin(direction)
+            v += a * self.ts
 
         pass
 
     def create_spline(self):
-        self.controller.calculate_controls_equidistant(self.path.points, self.c_dt)
-        self.path_shape = self.controller.shape
+        self.calculate_controls_equidistant(self.path.points)
+        self.shape = self.controller.shape
         pass
+
+    def calculate_controls_equidistant(self, path):  # currently: beziér curve degree 3
+        print('Car', self.id)
+        # CREATING NECESSARY VARIABLES
+        planner = PathPlanner(path)
+        self.shape = planner.generate_3()  # function generates shape (without timestamps)
+        length = planner.get_section_length()  # length of each section (shape between two waypoints)
+        length_abs = 0
+        for section in length:
+            length_abs += section
+        self.t_to_length = planner.t_to_length
+        curvature = planner.get_curvature()  # list of curvature values of the shape - needed for Ackerman steering
+        steering = []  # steering angle of car
+        for section in curvature:
+            for curve in section:
+                steering.append(np.arctan(self.length * curve) / np.pi * 180)
+        # plt.plot(steering)
+        # plt.show()
+
+        # DEFINE NUMBER OF SAMPLES WITH MAX ACCELERATION
+        t_ac = self.max_velocity / self.max_acceleration  # time to max velocity
+        s_ac = Polynomial(0, -self.max_acceleration, self.max_velocity).integration().get_value(
+            t_ac)  # way of deceleration
+        # t_ac = np.ndarray.tolist(t_ac)
+
+        if t_ac % self.ts == 0:
+            adaption_needed = False
+        else:
+            adaption_needed = True
+
+        n_ac_max = int(t_ac / self.ts) - 1  # number of samples with maximum acceleration
+
+        # PREPARE CONTROLS: FILL LIST WITH ACC_MAX, CALCULATE DISTANCE TRAVELLED
+        # control_prep: [timestamp, acceleration, distance traveled, velocity]
+        # TODO works not for (to) short shapes --> need to be added!!!
+        control_prep = []
+        distance = 0
+        t = 0
+        a = self.max_acceleration
+        i = 0
+        for k in range(0, n_ac_max):
+            t = round(k * self.ts, 7)
+            # distance = a.integration().integration().get_value(t)
+            distance = 0.5 * a * t ** 2
+            vel = a * t
+            control_prep.append([t, a, round(distance, 7), vel])
+            i = k
+
+        # distance = a.integration().integration().get_value(t + ts)
+        distance = 0.5 * a * t ** 2
+        vel = a * (t + self.ts)
+
+        if adaption_needed:
+            a_value = ((t_ac - self.ts * n_ac_max) * self.max_acceleration) / (2 * self.ts)
+            a = a_value
+            distance_ref = distance
+            vel_ref = vel
+            for j in range(n_ac_max, n_ac_max + 2):
+                t = round((j - i) * self.ts, 7)
+                control_prep.append([round(j * self.ts, 7), a, round(distance, 7), vel])
+                distance = distance_ref + 0.5 * a_value * t ** 2 + vel_ref * t
+                vel += a_value * self.ts
+
+        # ADD CONTROLS WITH 0 ACCELERATION TO THE LIST
+        # OFFSET NEEDED TO ADAPT THE DEC VALUES TO THE SAMPLING RATIO
+        # if adaption_needed:
+        #    offset = distance
+        # else:
+        #    offset = 0
+
+        distance_ref = distance
+        distance_diff = vel * self.ts
+        while distance < length_abs - distance_ref - distance_diff:
+            j += 1
+            control_prep.append([round(j * self.ts, 7), 0, round(distance, 7), vel])
+            distance += distance_diff
+
+        # ADD DEC VALUES TO THE LIST
+        a_value = abs(vel ** 2 / (2 * (length_abs - distance)))
+        n = j
+        vel_ref = vel
+        distance_ref = distance
+        while vel >= 0:
+            j += 1
+            t = round(((j - n) * self.ts), 7)
+            control_prep.append([round(j * self.ts, 7), -a_value, round(distance, 7), vel])
+            vel -= a_value * self.ts
+            distance = distance_ref + -a_value * 0.5 * t ** 2 + vel_ref * t
+
+        vel = control_prep[-1][3]
+        t = control_prep[-1][0]
+        s = control_prep[-1][2]
+        t_stop = t + vel / a_value
+        s_stop = s + -a_value * 0.5 * (vel / a_value) ** 2 + vel * (vel / a_value)
+        control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
+
+        # CONTROLLER GEts COORDINATES FOR EACH ENTRY IN CONTROL PREP
+        for i in range(0, len(control_prep) - 1):
+            xy = planner.get_coordinates(control_prep[i][2])
+            control_prep[i] = [control_prep[i][0], control_prep[i][1], control_prep[i][3], xy[0], xy[1]]
+
+        # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
+        # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]
+        stop = False
+        for control in control_prep:
+            if control[2] == 'CAR STOPPED':
+                pass
+            else:
+                t = control[0]
+                est_x = control[3]
+                est_y = control[4]
+                est_point = Point(est_x, est_y)
+                acc = control[1]
+                try:
+                    next_x = control_prep[control_prep.index(control) + 1][3]
+                    next_y = control_prep[control_prep.index(control) + 1][4]
+                    next_point = Point(next_x, next_y)
+                    dir = angle(est_point, next_point)
+                except IndexError:
+                    stop = True
+
+            self.controls.append([t, est_x, est_y, acc, dir, stop])
+            ev = Event(t, self, (t, self, acc, dir, stop), lambda: lib.eventqueue.car_control)
+            lib.eventqueue.add_event(ev)
+
+        self.controls.pop(-1)
+
+        pass
+        # fills the self.controls list with acceleration values
+
+    def control(self, t, acc, direction, stop):
+        # save current position
+        # TODO implement "stopping"
+        x = (t - self.time_last_control) * m.sin(direction) * acc + self.last_position[0]
+        y = (t - self.time_last_control) * m.cos(direction) * acc + self.last_position[1]
+        self.last_position = [x, y]
+
+        # update (control) the car
+        self.time_last_control = t
+        self.acceleration = acc
+        self.direction = direction
+
+    def get_data(self, t):
+        x = (t - self.time_last_control) * m.sin(self.direction) * self.acceleration + self.last_position[0]
+        y = (t - self.time_last_control) * m.cos(self.direction) * self.acceleration + self.last_position[1]
+        return [t, self.id, x, y]
+

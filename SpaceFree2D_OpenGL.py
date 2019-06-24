@@ -194,14 +194,14 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
 
     def show_interpolated_shape(self):
         for car in self.g.cars:
-            sections = len(car.path_shape[0])
+            sections = len(car.shape[0])
             x_old = car.spawn[0]
             y_old = car.spawn[1]
             for n in range(0, sections):
-                number_of_values = len(car.path_shape[0][n])
+                number_of_values = len(car.shape[0][n])
                 for i in range(0, number_of_values):
-                    x = car.path_shape[0][n][i]
-                    y = car.path_shape[1][n][i]
+                    x = car.shape[0][n][i]
+                    y = car.shape[1][n][i]
                     try:
                         glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
                     except ValueError:
@@ -216,12 +216,12 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
 
     def show_shape(self):
         for car in self.g.cars:
-            sections = len(car.path_shape[0])
+            sections = len(car.shape[0])
             for n in range(0, sections):
-                number_of_values = len(car.path_shape[0][n])
+                number_of_values = len(car.shape[0][n])
                 for i in range(0, number_of_values):
-                    x = car.path_shape[0][n][i]
-                    y = car.path_shape[1][n][i]
+                    x = car.shape[0][n][i]
+                    y = car.shape[1][n][i]
                     try:
                         glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
                     except ValueError:
@@ -234,15 +234,15 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
     def show_shape_optimized(self):
         if self.start:
             for car in self.g.cars:
-                sections = len(car.path_shape[0])
+                sections = len(car.shape[0])    #Todo refactor path_shape --> shape
                 x_old = car.spawn[0]
                 y_old = car.spawn[1]
                 for n in range(0, sections):
-                    c = car.path_shape[0]
-                    number_of_values = len(car.path_shape[0][n])
+                    c = car.shape[0]
+                    number_of_values = len(car.shape[0][n])
                     for i in range(0, number_of_values):
-                        x = car.path_shape[0][n][i]
-                        y = car.path_shape[1][n][i]
+                        x = car.shape[0][n][i]
+                        y = car.shape[1][n][i]
                         try:
                             glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1],
                                       colors.to_rgb(car.color)[2])

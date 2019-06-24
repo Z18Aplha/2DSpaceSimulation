@@ -1,4 +1,4 @@
-from CarFree2D import CarFree2D
+#from CarFree2D import CarFree2D
 from Obstacles2D import Obstacles2D
 
 
