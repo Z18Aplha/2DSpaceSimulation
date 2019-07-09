@@ -1,19 +1,8 @@
 from Point import Point
 import math as m
 import numpy as np
+import Lib as lib
 import matplotlib.pyplot as plt
-
-
-def angle(p1: Point, p2: Point):
-    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
-    return phi
-
-
-def distance(p1: Point, p2: Point):
-    x = p2.x - p1.x
-    y = p2.y - p1.y
-    d = np.linalg.norm([x, y])
-    return d
 
 
 class PathPlanner:
@@ -78,19 +67,19 @@ class PathPlanner:
         l = []
         for i in range(0, len(self.point_list)):
             if i == 0:
-                phi.append(angle(self.point_list[i], self.point_list[i + 1]))
-                l.append(distance(self.point_list[i], self.point_list[i + 1]))
+                phi.append(lib.angle(self.point_list[i], self.point_list[i + 1]))
+                l.append(lib.distance(self.point_list[i], self.point_list[i + 1]))
 
             if i == len(self.point_list) - 1:
-                phi.append(angle(self.point_list[i - 1], self.point_list[i]))
-                l.append(distance(self.point_list[i - 1], self.point_list[i]))
+                phi.append(lib.angle(self.point_list[i - 1], self.point_list[i]))
+                l.append(lib.distance(self.point_list[i - 1], self.point_list[i]))
 
             if not (i == 0 or i == len(self.point_list) - 1):  # expression (2) of the paper
-                phi.append(angle(self.point_list[i - 1], self.point_list[i]) + 0.5 * (
-                        angle(self.point_list[i], self.point_list[i + 1]) - angle(self.point_list[i - 1],
+                phi.append(lib.angle(self.point_list[i - 1], self.point_list[i]) + 0.5 * (
+                        lib.angle(self.point_list[i], self.point_list[i + 1]) - lib.angle(self.point_list[i - 1],
                                                                                   self.point_list[i])))
-                l.append(min(distance(self.point_list[i - 1], self.point_list[i]),
-                             distance(self.point_list[i], self.point_list[i + 1])))
+                l.append(min(lib.distance(self.point_list[i - 1], self.point_list[i]),
+                             lib.distance(self.point_list[i], self.point_list[i + 1])))
 
         # FIRST DERIVATIVE
         der1 = []

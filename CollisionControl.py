@@ -12,12 +12,16 @@ class CollisionControl:
         self.coll_obstacles = []
         self.coll_obst_cages = []
         self.coll_cars = []
+        self.car_cages = []
         self.obst_spacing = god.parameters["CollisionControl"]["obstacle_spacing"]
         self.car_spacing = god.parameters["CollisionControl"]["car_spacing"]
         self.polling_dif = god.parameters["CollisionControl"]["polling_dif"]
+        self.coll_det_freq = god.parameters["CollisionControl"]["collision_detection_frequency"]
         self.list = []
         self.last_position = []
+        self.last_angle = []
         self.collision_free = True
+        self.hardcollision_free = True
         self.make_poly()
 
     def make_car_poly_old(self, car: CarFree2D, t):
@@ -34,16 +38,26 @@ class CollisionControl:
                 raise Exception('Time did not match')
         return Concave_Poly(pos, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
 
-    def make_car_poly(self, car: CarFree2D, t):
+    def make_car_poly(self, car: CarFree2D):
         pos = 0
+        angle = 0
         for status in self.list:
-            if (car.id == status[0]) & (t == int(status[1]*1000)):
-                pos = Vector(status[2] - car.length / 2, status[3] - car.width / 2)
-                self.last_position[car.id]=pos
+            if car.id == status[1]:
+                pos = Vector(status[2], status[3])
+                angle = status[-1]
+                self.last_position[car.id] = pos
+                self.last_angle = angle
                 break
         if pos == 0:
             pos = self.last_position[car.id]
-        return Concave_Poly(pos, [Vector(0, 0), Vector(car.length, 0), Vector(car.length, car.width), Vector(0, car.width)])
+            angle = self.last_angle[car.id]
+        return Concave_Poly(pos, [Vector(-car.length/2, -car.width/2), Vector(car.length/2, -car.width/2), Vector(car.length/2, car.width/2), Vector(-car.length/2, car.width/2)], angle=angle)
+
+    def make_car_poly2(self, car):
+        pos = Vector(car.last_position[0] - car.length / 2, car.last_position[1] - car.width / 2)
+        buffer = car.last_velocity * self.coll_det_freq
+        self.coll_cars.append(Poly(pos, [Vector(-car.length/2, -car.width/2), Vector(car.length/2, -car.width/2), Vector(car.length/2, car.width/2), Vector(-car.length/2, car.width/2)], angle=car.direction))
+        self.car_cages.append(self.safety_zone(self.coll_cars[-1], self.car_spacing))
 
     def safety_zone(self, polygon, spacing):
         sides = len(polygon.points)
@@ -92,7 +106,7 @@ class CollisionControl:
 
     def make_poly(self):
         for car in self.god.cars:
-            self.coll_cars.append([car, self.polling_dif])
+            self.coll_cars.append(car)
             self.last_position.append(0)
         for obst in self.god.obstacles:
             self.coll_obstacles.append(self.make_obstacle_poly(obst))
@@ -100,43 +114,67 @@ class CollisionControl:
             self.coll_obst_cages.append(self.safety_zone(obst, self.obst_spacing))
 
     def check_for_collision(self):
+        length = len(lib.data)
         self.collision_free = True
-        self.list = self.god.calculation[:]
-        calc = self.list[-1][1]/(lib.dt/1000)
-        for i in range(int(calc)+1):
+        self.hardcollision_free = True
+        self.list = lib.data[:]
+        calc = len(self.list) / len(self.god.cars)
+        for i in range(int(calc)):
             cars_temp = self.coll_cars[:]
             for car_col in self.coll_cars:
-                if car_col[1] < 0 or i == 0:
-                    c = self.make_car_poly(car_col[0], i*lib.dt)
+                if self.hardcollision_free:
+                    c = self.make_car_poly(car_col)
                     c_cage = self.safety_zone(c, self.car_spacing)
                     for ob_cage in self.coll_obst_cages:
                         if collide(c_cage, ob_cage):
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, self.coll_obstacles[self.coll_obst_cages.index(ob_cage)]):
-                                print("Car ", car_col[0].id, "Hard Collision with obstacle @", round(i*(lib.dt/1000), 3))
+                                print("Car ", car_col.id, "Hard Collision with obstacle @", round(i*(lib.dt/1000), 3))
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(lib.dt/1000), car_col[0].id, car_col[0].id]
+                                    self.god.collisions = [i*(lib.dt/1000), car_col.id, car_col.id]
+                                self.hardcollision_free = False
+                                break
                             else:
-                                print("Car", car_col[0].id, "Soft Collision with obstacle @", i * round((lib.dt / 1000), 3))
+                                print("Car", car_col.id, "Soft Collision with obstacle @", i * round((lib.dt / 1000), 3))
                     cars_temp.remove(car_col)
                     for car in cars_temp:
-                        c2 = self.make_car_poly(car[0], i*lib.dt)
+                        c2 = self.make_car_poly(car)
                         c2_cage = self.safety_zone(c2, self.car_spacing)
                         if collide(c_cage, c2_cage):
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, c2):
-                                print("Car", car_col[0].id, "Hard Collision with car", car[0].id, "@",
-                                      round(i*(lib.dt/1000)), 3)
+                                print("Car", car_col.id, "Hard Collision with car", car.id, "@",
+                                      round(i*(lib.dt/1000), 3))
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(lib.dt/1000), car_col[0].id, car[0].id]
+                                    self.god.collisions = [i*(lib.dt/1000), car_col.id, car.id]
+                                break
                             else:
-                                print("Car", car_col[0].id, "Soft Collision with car", car[0].id, "@",
-                                      round(i * (lib.dt / 1000)), 3)
-                    car_col[1] = self.polling_dif
-                car_col[1] -= abs(self.list[i][4])*(lib.dt/1000)
+                                print("Car", car_col.id, "Soft Collision with car", car.id, "@",
+                                      round(i * (lib.dt / 1000), 3))
             for j in range(len(self.god.cars)):
                 del self.list[0]
         if self.collision_free:
             print("No collision occurred")
 
-
+    def predict_collision(self, t):
+        self.coll_cars = []
+        self.car_cages = []
+        cars = lib.carList[:]
+        for c in cars:
+            self.make_car_poly2(c)
+        cars_temp = self.coll_cars[:]
+        for c in self.coll_cars:
+            for ob_cage in self.coll_obst_cages:
+                if collide(c, object):
+                    if collide(c, self.coll_obstacles[self.coll_obst_cages.index(ob_cage)]):
+                        print("Possible hard collision with obstacle: \t", "Car ", self.coll_cars.index(c), "@", t)
+                    else:
+                        print("Possible soft collision with obstacle: \t", "Car", self.coll_cars.index(c), "@", t)
+                cars_temp.remove(c)
+                for c2 in cars_temp:
+                    c2_cage = self.safety_zone(c2, self.car_spacing)
+                    if collide(c, c2_cage):
+                        if collide(c, c2):
+                            print("Possible hard collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)
+                        else:
+                            print("Possible soft collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)

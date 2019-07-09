@@ -7,7 +7,7 @@ class Polynomial:
 
     def derivative(self):
         x0 = self.x1
-        x1 = 2* self.x2
+        x1 = 2 * self.x2
         x2 = 0
         return Polynomial(x2, x1, x0)
 
@@ -24,4 +24,3 @@ class Polynomial:
     def add_constant(self, x0):
         p = Polynomial(self.x2, self.x1, self.x0 + x0)
         return p
-

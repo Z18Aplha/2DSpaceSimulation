@@ -10,7 +10,8 @@ class EventQueue:
         self.last_index = 0
         self.god = god
         self.last_get_data = 0
-        self.get_data_counter = 0
+        self.last_coll_control = 0
+        self.add_event(Event(0, None, (0,), lambda: lib.eventqueue.check_for_collision()))
         self.add_event(Event(0, None, (0,), lambda: lib.eventqueue.get_data))
 
     def add_event_old(self, event: Event):
@@ -18,30 +19,39 @@ class EventQueue:
         self.events.append(event)
 
     def add_event(self, event: Event):
-        notinserted = True
+        not_inserted = True
         for e in self.events[::-1]:
             if event.time >= e.time:
                 index = self.events.index(e)
                 if (event.time == e.time) & (event.object == e.object):
                     self.events.remove(e)
                     self.events.insert(index, event)
-                    notinserted = False
+                    not_inserted = False
                     break
                 else:
                     if self.events[index-1].time != event.time:
                         self.events.insert(index+1, event)
-                        notinserted = False
+                        not_inserted = False
                         break
-        if notinserted:
+        if not_inserted:
             self.events.insert(0, event)
 
         # Add get_data
-        difference = event.time - (self.last_get_data + lib.dt)
-        to_add = int(difference / lib.dt)
+        difference = event.time - self.last_get_data
+        to_add = int(difference / (lib.dt/1000))
         for i in range(to_add):
-            self.last_get_data += lib.dt
-            data_event = (self.last_get_data, None, 0, lambda: lib.eventqueue.get_data())
-        # TODO every dt: get_data
+            self.last_get_data = round(self.last_get_data + (lib.dt/1000), 7)
+            data_event = Event(self.last_get_data, None, (self.last_get_data,), lambda: lib.eventqueue.get_data)
+            lib.eventqueue.add_event(data_event)
+
+        # Add check_for_collision
+        difference = event.time - self.last_coll_control
+        to_add = int(difference / lib.coll_det_freq)
+        for i in range(to_add):
+            self.last_coll_control = round(self.last_coll_control + lib.coll_det_freq, 7)
+            coll_event = Event(self.last_coll_control, None, (self.last_coll_control,), lambda: lib.eventqueue.check_for_collision)
+            lib.eventqueue.add_event(coll_event)
+
 
     # def execute(self, x, event_index):
     #     try:
@@ -57,7 +67,8 @@ class EventQueue:
     def exe(self, x, y):
         x(*y)
 
-    ###INCLUDED FUNCTIONS
+    # INCLUDED FUNCTIONS
+    # linking functions to "real" function
 
     def create_spline(self, car):
         car = self.god.cars[car.id]
@@ -68,6 +79,7 @@ class EventQueue:
 
     def get_data(self, t):
         for car in lib.carList:
-            a = car.get_data(t)
-            print(a)
-            lib.data.append(a)
+            lib.data.append(car.get_data(t))
+
+    def check_for_collision(self, t):
+        lib.collision.predict_collision(t)

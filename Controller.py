@@ -8,18 +8,13 @@ from math import ceil
 from PathPlanner import PathPlanner
 import matplotlib.pyplot as plt
 import math as m
-from Event import Event
-
-def angle(p1: Point, p2: Point):
-    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
-    return phi
+import Lib as lib
 
 
 class Controller:
     # assumption: acceleration is a instant value of the car --> using max_acceleration and max_deceleration
     # each car has ic_dt own controller
     # class with path planning and path following algorithms
-
 
     def __init__(self, p: Path, max_acceleration, max_velocity, length):
         self.max_velocity = max_velocity
@@ -147,7 +142,7 @@ class Controller:
                     next_x = control_prep[control_prep.index(control)+1][3]
                     next_y = control_prep[control_prep.index(control)+1][4]
                     next_point = Point(next_x, next_y)
-                    dir = angle(est_point, next_point)
+                    dir = lib.angle(est_point, next_point)
                 except IndexError:
                     stop = True
 

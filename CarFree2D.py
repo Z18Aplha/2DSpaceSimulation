@@ -9,52 +9,56 @@ from Event import Event
 import math as m
 import Lib as lib
 
-def angle(p1: Point, p2: Point):
-    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
-    return phi
-
 
 class CarFree2D:
     def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, ts):
         # PHYSICAL PROPERTIES
-        self.color = color
-        self.id = id
-        self.spawn = [spawn_x, spawn_y]
-        self.position = []
-        self.direction = angle
-        self.last_position = [spawn_x, spawn_y]
-        self.length = size_x    # in m
-        self.width = size_y     # in m
+        self.color = color                          # color code
+        self.id = id                                # unique car id
+        self.spawn = [spawn_x, spawn_y]             # spawnpoint
+        self.position = []                          # not used for EventQueue
+        self.direction = angle                      # direction of the car
+        self.start_direction = angle                # start-direction of the car
+        self.last_position = [spawn_x, spawn_y]     # position after last control input
+        self.length = size_x                        # in m
+        self.width = size_y                         # in m
         # VELOCITY
-        self.velocity = []      # in m/s
-        self.max_velocity = max_vel  # [vx, vy] in m/s
+        self.last_velocity = 0                      # velocity after last control input
+        self.velocity = []                          # not used for EventQueue
+        self.max_velocity = max_vel                 # absolute limit of velocity
         # ACCELERATION
-        self.acceleration = 0  # [ax, ay] in m/s^2
-        self.max_acceleration = max_acc  # [ax, ay] in m/s^2
+        self.acceleration = 0                       # acceleration given by last control input
+        self.max_acceleration = max_acc             # absolute limit of acceleration
         # STEERING
-        self.steering = 0
-        self.direction = 0
+        self.steering = 0                           # steering angle given by last control input
+        self.direction = 0                          # direction angle given by last control input
         # PATH
-        self.shape = []  # shape of the planned path (without exact timestamp)
-        self.path = Path(self.spawn)
-        self.waypoints = []     # list for the given points with the
+        self.shape = []                             # shape of the planned path (without exact timestamp)
+        self.path = Path(self.spawn)                # "shape" with exact timestamp
+        self.waypoints = []                         # list for the given points with the
         self.controller = Controller(self.path, self.max_acceleration, self.max_velocity, self.length)
-        self.ts = ts/1000
-        self.t_to_length = []
+        self.ts = ts/1000                           # sampling time of AGV^(-1)
+        self.t_to_length = []                       # t is parameter of bezier-curve, t_to_length is correlation of t and length of shape
         # CONTROLS
-        self.controls = []
-        self.time_last_control = 0
+        self.controls = []                          # not used for EventQueue
+        self.time_last_control = 0                  # timestamp of last control input
+        self.stop = False                           # False: car drives, True: car stops (or will stop within the next time (t < ts)
+        self.stop_time = 0                          # timestamp of stop (velocitiy 0 reached)
 
     # GETTER
+    # currenttly not used
     def get_speed(self, absolute):  # absolute is boolean - true returns absolute value, false vectorial speed
         if absolute:
             return sqrt(self.velocity[0] * self.velocity[0] + self.velocity[1] * self.velocity[1])
         else:
             return self.velocity
 
+    # currenttly not used
     def get_acceleration(self):
         return self.acceleration
 
+    # not usable with EventQueue
+    # returns cars status for a given time t
     def status(self, t):
 
         # INITIALIZATION
@@ -74,7 +78,6 @@ class CarFree2D:
                 ax = control[0].get_value(dt)
                 ay = control[1].get_value(dt)
 
-
         # VELOCITY
         t_old = 0
         for velocity in self.velocity:
@@ -83,7 +86,6 @@ class CarFree2D:
                 dt = t - t_old
                 vx = velocity[0].get_value(dt)
                 vy = velocity[1].get_value(dt)
-
 
         # POSITION
         t_old = 0
@@ -94,29 +96,18 @@ class CarFree2D:
                 sx = position[0].get_value(dt)
                 sy = position[1].get_value(dt)
 
-
         return [self.id, t, sx, sy, vx, vy, ax, ay]
 
-    # SETTER
-    #    def set_acceleration(self, ax: float, ay: float):
-    #        # CHECK RANGE
-    #        ax = max(-self.max_acceleration[0], min(ax, self.max_acceleration[0]))
-    #        ay = max(-self.max_acceleration[1], min(ay, self.max_acceleration[1]))
-    #        self.acceleration = [ax, ay]
-
-    #    def set_velocity(self, vx: float, vy: float):
-    #        # CHECK RANGE
-    #        vx = max(-self.max_velocity[0], min(vx, self.max_velocity[0]))
-    #        vy = max(-self.max_velocity[1], min(vy, self.max_velocity[1]))
-    #        self.velocity = [vx, vy]
-
+    # sets waypoint (given by *.json file) for the car
     def set_waypoint(self, x, y):
         p = Point(x, y)
         self.path.add(p)
         self.waypoints.append(p)
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
-    # SIMULATION
+    # not usable with EventQueue
+    # calculates the behaviour of the car for the whole time (only one time)
+    # works with x and y components
     def update(self):   # TODO refactor this entry --> acc and vel no vector anymore
 
         # VELOCITY
@@ -148,6 +139,9 @@ class CarFree2D:
             t_old = entry[2]
             self.position.append([sx, sy, entry[2]])
 
+    # not usable with EventQueue
+    # calculates the behaviour of the car for the whole time (only one time)
+    # works with absolut values and angles
     def update2(self):
         # new Update routine
 
@@ -181,11 +175,13 @@ class CarFree2D:
 
         pass
 
+    # creates spline for the given waypoints (from the *.json file)
     def create_spline(self):
         self.calculate_controls_equidistant(self.path.points)
-        self.shape = self.controller.shape
-        pass
 
+    # not usable with EventQueue
+    # calculates the controls for the car for the whole time (only one time)
+    # works with absolute values and angles
     def calculate_controls_equidistant(self, path):  # currently: beziér curve degree 3
         print('Car', self.id)
         # CREATING NECESSARY VARIABLES
@@ -302,7 +298,7 @@ class CarFree2D:
                     next_x = control_prep[control_prep.index(control) + 1][3]
                     next_y = control_prep[control_prep.index(control) + 1][4]
                     next_point = Point(next_x, next_y)
-                    dir = angle(est_point, next_point)
+                    dir = lib.angle(est_point, next_point)
                 except IndexError:
                     stop = True
 
@@ -315,20 +311,43 @@ class CarFree2D:
         pass
         # fills the self.controls list with acceleration values
 
+    # used with EventQueue
+    # car gets controlled with specific values by an Event (car_control)
     def control(self, t, acc, direction, stop):
-        # save current position
-        # TODO implement "stopping"
-        x = (t - self.time_last_control) * m.sin(direction) * acc + self.last_position[0]
-        y = (t - self.time_last_control) * m.cos(direction) * acc + self.last_position[1]
+        # save current position and speed
+        dt = t - self.time_last_control
+        x = 0.5*(dt**2) * m.cos(direction) * acc + m.cos(direction) * self.last_velocity * dt + self.last_position[0]
+        y = 0.5*(dt**2) * m.sin(direction) * acc + m.sin(direction) * self.last_velocity * dt + self.last_position[1]
         self.last_position = [x, y]
+
+        self.last_velocity += acc * dt
 
         # update (control) the car
         self.time_last_control = t
         self.acceleration = acc
         self.direction = direction
+        self.stop = stop
 
+        if stop:
+            self.stop_time = self.last_velocity / self.acceleration + self.time_last_control
+
+    # used with EventQueue
+    # returns position of the car at specific time t
+    # also more information available (but certainly not needed),f.e. acceleration, direction, steering, angle, ...
     def get_data(self, t):
-        x = (t - self.time_last_control) * m.sin(self.direction) * self.acceleration + self.last_position[0]
-        y = (t - self.time_last_control) * m.cos(self.direction) * self.acceleration + self.last_position[1]
-        return [t, self.id, x, y]
+        dt = 0
+        if not self.stop:
+            dt = (t - self.time_last_control)
+
+        else:
+            dt = (self.stop_time - self.time_last_control)
+
+        x = 0.5 * (dt ** 2) * m.cos(self.direction) * self.acceleration + m.cos(
+            self.direction) * self.last_velocity * dt + self.last_position[0]
+        y = 0.5 * (dt ** 2) * m.sin(self.direction) * self.acceleration + m.sin(
+            self.direction) * self.last_velocity * dt + self.last_position[1]
+        dir = round(self.direction, 5)
+        if t == 0:
+            dir = self.start_direction
+        return [t, self.id, round(x, 4), round(y, 4), dir]
 

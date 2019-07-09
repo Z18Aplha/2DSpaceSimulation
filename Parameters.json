@@ -4,7 +4,9 @@
       "size": [30, 20],
       "m2p_factor": 20,
       "dt": 20,
-      "ts": 1
+      "dt_comment" : "data sampling rate",
+      "ts": 2,
+      "ts_comment" : "controller sampling rate"
     },
   "SpaceFree2D":
     {
@@ -17,7 +19,7 @@
         "index": 0,
         "spawn_x": 5.0,
         "spawn_y": 5.0,
-        "angle": 0,
+        "angle": 0.787,
         "length": 4.0,
         "width": 2.0,
         "max_vel": 40,
@@ -28,7 +30,7 @@
         "index": 1,
         "spawn_x": 10,
         "spawn_y": 10,
-        "angle":  0,
+        "angle":  1.58,
         "length": 2,
         "width": 4,
         "max_vel": 20,
@@ -39,7 +41,7 @@
         "index": 2,
         "spawn_x": 20,
         "spawn_y": 10,
-        "angle":  0,
+        "angle":  1.58,
         "length": 2,
         "width": 1,
         "max_vel": 20,
@@ -50,7 +52,7 @@
         "index": 3,
         "spawn_x": 5,
         "spawn_y": 10,
-        "angle":  0,
+        "angle":  -0.675,
         "length": 5,
         "width": 2,
         "max_vel": 10,
@@ -187,6 +189,7 @@
   {
     "obstacle_spacing": 0.1,
     "car_spacing": 0.5,
-    "polling_dif": 0.001
+    "polling_dif": 0.001,
+    "collision_detection_frequency": 0.2
   }
 }

@@ -37,9 +37,10 @@ class God:
         self.obstacles = []
         self.collisions = [10000, 10000, 10000]
         # INSERT IN LIBRARY
+        lib.set_collision(CollisionControl(self))
+        lib.set_coll_det_freq(parameters["CollisionControl"]["collision_detection_frequency"])
         eq = EventQueue(self)
         lib.set_eventqueue(eq)
-
 
 
     def file_read(self):
@@ -133,6 +134,7 @@ class God:
         self.obstacles.append(Obstacles2D(self.size[0]-0.1, self.size[1]-0.1, [self.size[0]-0.1, self.size[1], self.size[0]+1,
                                                                        self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
                                                                        0], 'white'))
+
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
