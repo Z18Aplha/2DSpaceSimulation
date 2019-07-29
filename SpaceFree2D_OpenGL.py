@@ -6,6 +6,8 @@ import math
 import time
 from pyglet import clock
 import imageio
+import Lib as lib
+import numpy as np
 
 
 class SpaceFree2DOpenGL(pyglet.window.Window):
@@ -27,7 +29,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.obstacles = []
         self.coordinates = []
         self.timestamp = 0
-        self.dataset = g.calculation[:]
+        self.dataset = lib.data[:]
         self.start = True
         self.stop = g.last_timestamp
         self.counter = 0
@@ -41,20 +43,23 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.animSprite = 0
 
     def on_draw(self):
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
+
         if self.running:
             if self.collided:
                 if self.blink_counter >= (self.fps / 5):
                     self.blink_counter = 0
-                    if self.front[self.g.collisions[1]] == 'white':
+                    if self.front[self.g.collisions[1]] == 'orange':
                         self.front[self.g.collisions[1]] = 'yellow'
                         self.front[self.g.collisions[2]] = 'yellow'
                         self.back[self.g.collisions[1]] = 'red'
                         self.back[self.g.collisions[2]] = 'red'
                     else:
-                        self.front[self.g.collisions[1]] = 'white'
-                        self.front[self.g.collisions[2]] = 'white'
-                        self.back[self.g.collisions[1]] = 'white'
-                        self.back[self.g.collisions[2]] = 'white'
+                        self.front[self.g.collisions[1]] = 'orange'
+                        self.front[self.g.collisions[2]] = 'orange'
+                        self.back[self.g.collisions[1]] = 'orange'
+                        self.back[self.g.collisions[2]] = 'orange'
 
                 self.blink_counter += 1
 
@@ -75,68 +80,170 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             for car in self.g.cars:
                 i = self.g.cars.index(car)
                 if self.start:
-                    x1 = (car.spawn[0] - car.length / 2) * self.pxm
-                    y1 = (car.spawn[1] - car.width / 2) * self.pxm
-                    x2 = (car.spawn[0] + car.length / 2) * self.pxm
-                    y2 = (car.spawn[1] - car.width / 2) * self.pxm
-                    x3 = (car.spawn[0] + car.length / 2) * self.pxm
-                    y3 = (car.spawn[1] + car.width / 2) * self.pxm
-                    x4 = (car.spawn[0] - car.length / 2) * self.pxm
-                    y4 = (car.spawn[1] + car.width / 2) * self.pxm
-                    self.coordinates.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                    x0 = car.spawn[0]
+                    y0 = car.spawn[1]
+                    angle = car.start_direction
+                    x1 = car.spawn[0] - car.length / 2
+                    y1 = car.spawn[1] - car.width / 2
+                    x2 = car.spawn[0] + car.length / 2
+                    y2 = car.spawn[1] - car.width / 2
+                    x3 = car.spawn[0] + car.length / 2
+                    y3 = car.spawn[1] + car.width / 2
+                    x4 = car.spawn[0] - car.length / 2
+                    y4 = car.spawn[1] + car.width / 2
+                    self.coordinates.append([x1, y1, x2, y2, x3, y3, x4, y4, x0, y0, angle])
                 try:
                     glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
                 except ValueError:
                     clr = self.hex_to_rgb(car.color)
                     glColor3f(clr[0], clr[1], clr[2])
+                angle = self.coordinates[i][-1]
+                x0 = self.coordinates[i][-3]
+                y0 = self.coordinates[i][-2]
                 glBegin(GL_QUADS)
-                glVertex2f(self.coordinates[i][0], self.coordinates[i][1])  # x1, y1
-                glVertex2f(self.coordinates[i][2], self.coordinates[i][3])  # x2, y2
-                glVertex2f(self.coordinates[i][4], self.coordinates[i][5])  # x3, y3
-                glVertex2f(self.coordinates[i][6], self.coordinates[i][7])  # x4, y4
+                x, y = self.rotate(self.coordinates[i][0], self.coordinates[i][1], x0, y0, angle)
+                glVertex2f(x, y)  # x1, y1
+                x, y = self.rotate(self.coordinates[i][2], self.coordinates[i][3], x0, y0, angle)
+                glVertex2f(x, y)  # x2, y2
+                x, y = self.rotate(self.coordinates[i][4], self.coordinates[i][5], x0, y0, angle)
+                glVertex2f(x, y)  # x3, y3
+                x, y = self.rotate(self.coordinates[i][6], self.coordinates[i][7], x0, y0, angle)
+                glVertex2f(x, y)  # x4, y4
                 glEnd()
 
                 # Wheels
-                radius = min(car.length, car.width) * self.pxm / 6
-                self.circle(self.coordinates[i][0] + 1.5 * radius, self.coordinates[i][1] + 1.5 * radius, radius)
-                self.circle(self.coordinates[i][2] - 1.5 * radius, self.coordinates[i][3] + 1.5 * radius, radius)
-                self.circle(self.coordinates[i][4] - 1.5 * radius, self.coordinates[i][5] - 1.5 * radius, radius)
-                self.circle(self.coordinates[i][6] + 1.5 * radius, self.coordinates[i][7] - 1.5 * radius, radius)
+                radius = min(car.length, car.width) / 6
+                x, y = self.rotate(self.coordinates[i][0] + 1.5 * radius, self.coordinates[i][1] + 1.5 * radius, x0, y0,
+                                   angle)
+                self.circle(x, y, radius * self.pxm)
+                x, y = self.rotate(self.coordinates[i][2] - 1.5 * radius, self.coordinates[i][3] + 1.5 * radius, x0, y0,
+                                   angle)
+                self.circle(x, y, radius * self.pxm)
+                x, y = self.rotate(self.coordinates[i][4] - 1.5 * radius, self.coordinates[i][5] - 1.5 * radius, x0, y0,
+                                   angle)
+                self.circle(x, y, radius * self.pxm)
+                x, y = self.rotate(self.coordinates[i][6] + 1.5 * radius, self.coordinates[i][7] - 1.5 * radius, x0, y0,
+                                   angle)
+                self.circle(x, y, radius * self.pxm)
+
+                x, y = self.rotate(self.coordinates[i][0]+(self.coordinates[i][2]-self.coordinates[i][0])/2,
+                                   self.coordinates[i][1]+(self.coordinates[i][7]-self.coordinates[i][1])/2, x0, y0,
+                                   angle)
                 pyglet.text.Label(str(car.id), font_name='Times New Roman', font_size=10,
-                                  x=self.coordinates[i][0]+(self.coordinates[i][2]-self.coordinates[i][0])/2,
-                                  y=self.coordinates[i][1]+(self.coordinates[i][7]-self.coordinates[i][1])/2,
+                                  x=x,
+                                  y=y,
                                   anchor_x='center', anchor_y='center').draw()
 
                 # Lights
-                size = (car.width / 10) * self.pxm
+                size = (car.width / 10)
                 # Front
                 glColor3f(colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2])
                 glBegin(GL_QUADS)
-                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-2*size)
-                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-2*size)
-                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-size)
-                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-size)
+                x, y = self.rotate(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-2*size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-2*size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-size, x0, y0, angle)
+                glVertex2f(x, y)
                 glEnd()
+
+                x1, y1 = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-2*size, x0, y0, angle)
+                x2, y2 = self.rotate(self.coordinates[i][2] + 5*size, self.coordinates[i][5]-5*size, x0, y0, angle)
+                x3, y3 = self.rotate(self.coordinates[i][2] + 5*size, self.coordinates[i][5]+2*size, x0, y0, angle)
+                x4, y4 = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-size, x0, y0, angle)
+                pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                                     ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
+                                      ),
+                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255)
+                                      )
+                                     )
                 glBegin(GL_QUADS)
-                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + 2 * size)
-                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + 2 * size)
-                glVertex2f(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + size)
-                glVertex2f(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + size)
+                x, y = self.rotate(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][2] - size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+                glVertex2f(x, y)
                 glEnd()
+
+                x1, y1 = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                x2, y2 = self.rotate(self.coordinates[i][2] + 5 * size, self.coordinates[i][3] + 5 * size, x0, y0, angle)
+                x3, y3 = self.rotate(self.coordinates[i][2] + 5 * size, self.coordinates[i][3] - 2 * size, x0, y0, angle)
+                x4, y4 = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+
+                pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                                     ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
+                                      ),
+                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255)
+                                      )
+                                     )
                 # Back
                 glColor3f(colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1], colors.to_rgb(self.back[i])[2])
                 glBegin(GL_QUADS)
-                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - 2 * size)
-                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - 2 * size)
-                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - size)
-                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - size)
+                x, y = self.rotate(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - size, x0, y0, angle)
+                glVertex2f(x, y)
                 glEnd()
+
+                x1, y1 = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - 2 * size, x0, y0, angle)
+                x2, y2 = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][5] - size, x0, y0, angle)
+                x3, y3 = self.rotate(self.coordinates[i][0] - 5 * size, self.coordinates[i][5] + 2 * size, x0, y0, angle)
+                x4, y4 = self.rotate(self.coordinates[i][0] - 5 * size, self.coordinates[i][5] - 5 * size, x0, y0, angle)
+                pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                                     ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
+                                      ),
+                                     ('c4f', (colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 0,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 0)
+                                      )
+                                     )
                 glBegin(GL_QUADS)
-                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + 2 * size)
-                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + 2 * size)
-                glVertex2f(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + size)
-                glVertex2f(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + size)
+                x, y = self.rotate(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+                glVertex2f(x, y)
+                x, y = self.rotate(self.coordinates[i][0] + size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+                glVertex2f(x, y)
                 glEnd()
+                x1, y1 = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + 2 * size, x0, y0, angle)
+                x2, y2 = self.rotate(self.coordinates[i][0] - size / 2, self.coordinates[i][3] + size, x0, y0, angle)
+                x3, y3 = self.rotate(self.coordinates[i][0] - 5 * size, self.coordinates[i][3] - 2 * size, x0, y0, angle)
+                x4, y4 = self.rotate(self.coordinates[i][0] - 5 * size, self.coordinates[i][3] + 5 * size, x0, y0, angle)
+                pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                                     ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
+                                      ),
+                                     ('c4f', (colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 0,
+                                              colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
+                                              colors.to_rgb(self.back[i])[2], 0)
+                                      )
+                                     )
 
             label = pyglet.text.Label(str(self.timestamp),
                                       font_name='Times New Roman',
@@ -176,6 +283,16 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             dx, dy = (dx * c - dy * s), (dy * c + dx * s)
         glEnd()
 
+    def rotate(self, x, y, x0, y0, angle):
+        x = x - x0
+        y = y - y0
+        xx = x * np.cos(angle) - y * np.sin(angle)
+        yy = x * np.sin(angle) + y * np.cos(angle)
+
+        x_new = xx + x0
+        y_new = yy + y0
+        return x_new * self.pxm, y_new * self.pxm
+
     def show_waypoints(self):
         for car in self.g.cars:
             for point in car.waypoints:
@@ -194,14 +311,14 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
 
     def show_interpolated_shape(self):
         for car in self.g.cars:
-            sections = len(car.path_shape[0])
+            sections = len(car.shape[0])
             x_old = car.spawn[0]
             y_old = car.spawn[1]
             for n in range(0, sections):
-                number_of_values = len(car.path_shape[0][n])
+                number_of_values = len(car.shape[0][n])
                 for i in range(0, number_of_values):
-                    x = car.path_shape[0][n][i]
-                    y = car.path_shape[1][n][i]
+                    x = car.shape[0][n][i]
+                    y = car.shape[1][n][i]
                     try:
                         glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
                     except ValueError:
@@ -216,12 +333,12 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
 
     def show_shape(self):
         for car in self.g.cars:
-            sections = len(car.path_shape[0])
+            sections = len(car.shape[0])
             for n in range(0, sections):
-                number_of_values = len(car.path_shape[0][n])
+                number_of_values = len(car.shape[0][n])
                 for i in range(0, number_of_values):
-                    x = car.path_shape[0][n][i]
-                    y = car.path_shape[1][n][i]
+                    x = car.shape[0][n][i]
+                    y = car.shape[1][n][i]
                     try:
                         glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
                     except ValueError:
@@ -234,15 +351,15 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
     def show_shape_optimized(self):
         if self.start:
             for car in self.g.cars:
-                sections = len(car.path_shape[0])
+                sections = len(car.shape[0])
                 x_old = car.spawn[0]
                 y_old = car.spawn[1]
                 for n in range(0, sections):
-                    c = car.path_shape[0]
-                    number_of_values = len(car.path_shape[0][n])
+                    c = car.shape[0]
+                    number_of_values = len(car.shape[0][n])
                     for i in range(0, number_of_values):
-                        x = car.path_shape[0][n][i]
-                        y = car.path_shape[1][n][i]
+                        x = car.shape[0][n][i]
+                        y = car.shape[1][n][i]
                         try:
                             glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1],
                                       colors.to_rgb(car.color)[2])
@@ -279,39 +396,44 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             #pyglet.app.exit()
         self.clear()
         self.start = False
-        if self.timestamp <= self.g.collisions[0]:
+        if self.timestamp <= (self.g.collisions[0] + lib.dt/1000):
             i = 0
             while i < len(self.dataset):
                 data = self.dataset[i]
-                if data[1] == self.timestamp:
-                    car = self.g.cars[data[0]]
-                    x1 = (data[2] - car.length / 2) * self.pxm
-                    y1 = (data[3] - car.width / 2) * self.pxm
-                    x2 = (data[2] + car.length / 2) * self.pxm
-                    y2 = (data[3] - car.width / 2) * self.pxm
-                    x3 = (data[2] + car.length / 2) * self.pxm
-                    y3 = (data[3] + car.width / 2) * self.pxm
-                    x4 = (data[2] - car.length / 2) * self.pxm
-                    y4 = (data[3] + car.width / 2) * self.pxm
-                    self.coordinates[data[0]] = [x1, y1, x2, y2, x3, y3, x4, y4]
+                if data[0] == self.timestamp:
+                    car = self.g.cars[data[1]]
+                    x1 = data[2] - car.length / 2
+                    y1 = data[3] - car.width / 2
+                    x2 = data[2] + car.length / 2
+                    y2 = data[3] - car.width / 2
+                    x3 = data[2] + car.length / 2
+                    y3 = data[3] + car.width / 2
+                    x4 = data[2] - car.length / 2
+                    y4 = data[3] + car.width / 2
+
+                    angle = data[4]
+
+                    self.coordinates[data[1]] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
                     self.dataset.remove(data)
                 else:
-                    if data[1] < self.timestamp:
+                    if data[0] < self.timestamp:
                         i += 1
                     else:
-                        if self.dataset[i-1][1] < self.timestamp:
-                            print(self.dataset[i-1], self.timestamp)
+                        if self.dataset[i-1][0] < self.timestamp:
                             data = self.dataset[i-1]
-                            car = self.g.cars[data[0]]
-                            x1 = (data[2] - car.length / 2) * self.pxm
-                            y1 = (data[3] - car.width / 2) * self.pxm
-                            x2 = (data[2] + car.length / 2) * self.pxm
-                            y2 = (data[3] - car.width / 2) * self.pxm
-                            x3 = (data[2] + car.length / 2) * self.pxm
-                            y3 = (data[3] + car.width / 2) * self.pxm
-                            x4 = (data[2] - car.length / 2) * self.pxm
-                            y4 = (data[3] + car.width / 2) * self.pxm
-                            self.coordinates[data[0]] = [x1, y1, x2, y2, x3, y3, x4, y4]
+                            car = self.g.cars[data[1]]
+                            x1 = data[2] - car.length / 2
+                            y1 = data[3] - car.width / 2
+                            x2 = data[2] + car.length / 2
+                            y2 = data[3] - car.width / 2
+                            x3 = data[2] + car.length / 2
+                            y3 = data[3] + car.width / 2
+                            x4 = data[2] - car.length / 2
+                            y4 = data[3] + car.width / 2
+
+                            angle = data[4]
+
+                            self.coordinates[data[1]] = [x1, y1, x2, y2, x3, y3, x4, y4, angle]
                         break
 
         else:
@@ -320,6 +442,6 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.timestamp = round(self.timestamp + 1/self.fps, 3)
 
     def create_space(self):
-        print(self.g.last_timestamp)
+        print(f"\n max. animation duration: {self.g.last_timestamp:< 1.4} seconds")
         pyglet.clock.schedule_interval(self.update, 1/self.fps)
         pyglet.app.run()

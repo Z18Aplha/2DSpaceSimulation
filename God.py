@@ -8,6 +8,7 @@ from Polynomial import Polynomial
 import time
 from EventQueue import EventQueue
 from Event import Event
+import Lib as lib
 
 class God:
 
@@ -30,10 +31,17 @@ class God:
         self.calculation = []  # list of polynomial for a specific period of time --> WHAT DOES THIS MEAN?
         self.simulation = []
         self.controller_data = []
-        self.dt = parameters["God"]["dt"]  # time between each data point in ms
-        self.c_dt = parameters["God"]["c_dt"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
+        dt = parameters["God"]["dt"]  # time between each data point in ms
+        lib.set_dt(dt)
+        self.ts = parameters["God"]["ts"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         self.obstacles = []
         self.collisions = [10000, 10000, 10000]
+        # INSERT IN LIBRARY
+        lib.set_collision(CollisionControl(self))
+        lib.set_coll_det_freq(parameters["CollisionControl"]["collision_detection_frequency"])
+        eq = EventQueue(self)
+        lib.set_eventqueue(eq)
+
 
     def file_read(self):
         ############################
@@ -64,8 +72,9 @@ class God:
             color = str(car["color"])
 
             car = CarFree2D(car_id, spawn_x, spawn_y, length, width, angle, max_vel, max_acc, color,
-                            self.c_dt)
+                            self.ts)
             self.cars.append(car)
+            lib.carList.append(car)
 
         ################################
         ## ASSIGN PATH TO EACH CAR #####
@@ -125,12 +134,13 @@ class God:
         self.obstacles.append(Obstacles2D(self.size[0]-0.1, self.size[1]-0.1, [self.size[0]-0.1, self.size[1], self.size[0]+1,
                                                                        self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
                                                                        0], 'white'))
+
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
             car.create_spline()
 
-        n = ceil(self.last_timestamp * 1000 / self.dt)
+        n = ceil(self.last_timestamp * 1000 / lib.dt)
 
         for car in self.cars:
             car.update()
@@ -139,7 +149,7 @@ class God:
 
         for i in range(0, n + 1):
             for car in self.cars:
-                self.calculation.append(car.status(i * self.dt / 1000))
+                self.calculation.append(car.status(i * lib.dt / 1000))
             if coll.check_for_collision() is False:
                 print("Collision occourred . . . Aborting")
                 break
@@ -151,7 +161,7 @@ class God:
 
         for dat in self.simulation:
             data = dat[:]
-            data[1] = ceil(data[1] / (self.c_dt / 1000)) * (self.c_dt / 1000)
+            data[1] = ceil(data[1] / (self.ts / 1000)) * (self.ts / 1000)
             if not data[-1]:
                 if len(self.controller_data) <= len(self.cars):
                     for i in range(2, len(data) - 2):
@@ -166,14 +176,12 @@ class God:
 
     def simulate(self):
 
-        eventqueue = EventQueue(self)
-
         for car in self.cars:
-            event = Event(0, car, (car,), lambda: eventqueue.create_spline)
-            eventqueue.add_event(event)
+            event = Event(-1, car, (car,), lambda: lib.eventqueue.create_spline)
+            lib.eventqueue.add_event(event)
 
-        for event in eventqueue.events:
-            eventqueue.exe(event.function(), event.parameters)
+        for event in lib.eventqueue.events:
+            lib.eventqueue.exe(event.function(), event.parameters)
 
         '''
         for car in self.cars:
@@ -204,9 +212,9 @@ class God:
                 except IndexError:
                     lists_ended += 1
                     pass
-            n+=1
+            n += 1
         pass
 
         self.last_timestamp = self.calculation[-1][1]
         coll = CollisionControl(self)
-        coll.check_for_collision()
+        #coll.check_for_collision()

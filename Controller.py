@@ -8,24 +8,19 @@ from math import ceil
 from PathPlanner import PathPlanner
 import matplotlib.pyplot as plt
 import math as m
-
-
-def angle(p1: Point, p2: Point):
-    phi = m.atan2(p2.y - p1.y, p2.x - p1.x)
-    return phi
+import Lib as lib
 
 
 class Controller:
     # assumption: acceleration is a instant value of the car --> using max_acceleration and max_deceleration
-    # each car has its own controller
+    # each car has ic_dt own controller
     # class with path planning and path following algorithms
-
 
     def __init__(self, p: Path, max_acceleration, max_velocity, length):
         self.max_velocity = max_velocity
         self.max_acceleration = max_acceleration
         self.length_car = length  # length of the car, needed for steering angle (calculated with curvature)
-        self.path = p  # list with points AND timestamps
+        self.path = p  # list with poinc_dt AND timestamps
         self.shape = []  # shape of path, the car should follow
         self.controls = []  # acceleration controls
         self.steer_control = []  # steering angle controls
@@ -35,7 +30,7 @@ class Controller:
         # CREATING NECESSARY VARIABLES
         planner = PathPlanner(path)
         self.shape = planner.generate_3()  # function generates shape (without timestamps)
-        length = planner.get_section_length()  # length of each section (shape between two waypoints)
+        length = planner.get_section_length()  # length of each section (shape between two waypoinc_dt)
         length_abs = 0
         for section in length:
             length_abs += section
@@ -126,7 +121,7 @@ class Controller:
         s_stop = s + -a_value*0.5*(vel/a_value)**2 + vel*(vel/a_value)
         control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
 
-        # CONTROLLER GETS COORDINATES FOR EACH ENTRY IN CONTROL PREP
+        # CONTROLLER GEc_dt COORDINATES FOR EACH ENTRY IN CONTROL PREP
         for i in range(0, len(control_prep)-1):
             xy = planner.get_coordinates(control_prep[i][2])
             control_prep[i] = [control_prep[i][0], control_prep[i][1], control_prep[i][3], xy[0], xy[1]]
@@ -147,11 +142,13 @@ class Controller:
                     next_x = control_prep[control_prep.index(control)+1][3]
                     next_y = control_prep[control_prep.index(control)+1][4]
                     next_point = Point(next_x, next_y)
-                    dir = angle(est_point, next_point)
+                    dir = lib.angle(est_point, next_point)
                 except IndexError:
                     stop = True
 
             self.controls.append([t, est_x, est_y, acc, dir, stop])
+#            ev = Event(t, )
+
         self.controls.pop(-1)
 
         pass
