@@ -4,10 +4,13 @@ import numpy as np
 
 eventqueue = None
 dt = None
+ts = None
+latency = None
 carList = []
 data = []
 collision = None
 coll_det_freq = None
+car_count = None
 
 
 # some setter methods
@@ -21,6 +24,11 @@ def set_dt(t):
     dt = t
 
 
+def set_ts(t):
+    global ts
+    ts = t
+
+
 def set_collision(c):
     global collision
     collision = c
@@ -29,6 +37,16 @@ def set_collision(c):
 def set_coll_det_freq(cdf):
     global coll_det_freq
     coll_det_freq = cdf
+
+
+def set_latency(l):
+    global latency
+    latency = l
+
+
+def set_carcount(c):
+    global car_count
+    car_count = c
 
 
 # some methods used my multiple classes

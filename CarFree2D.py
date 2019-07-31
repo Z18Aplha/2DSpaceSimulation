@@ -1,4 +1,3 @@
-from Controller import Controller
 from Path import Path
 from math import sqrt, cos, sin
 from Point import Point
@@ -12,6 +11,7 @@ import Lib as lib
 
 class CarFree2D:
     def __init__(self, id: int, spawn_x, spawn_y, size_x, size_y, angle, max_vel, max_acc, color, ts):
+        self.ghost = False
         # PHYSICAL PROPERTIES
         self.color = color                          # color code
         self.id = id                                # unique car id
@@ -36,15 +36,14 @@ class CarFree2D:
         self.shape = []                             # shape of the planned path (without exact timestamp)
         self.path = Path(self.spawn)                # "shape" with exact timestamp
         self.waypoints = []                         # list for the given points with the
-        self.controller = Controller(self.path, self.max_acceleration, self.max_velocity, self.length)
         self.ts = ts/1000                           # sampling time of AGV^(-1)
         self.t_to_length = []                       # t is parameter of bezier-curve, t_to_length is correlation of t and length of shape
         # CONTROLS
-        self.controls = []                          # not used for EventQueue
         self.time_last_control = 0                  # timestamp of last control input
         self.stop = False                           # False: car drives, True: car stops (or will stop within the next time (t < ts)
         self.stop_time = 0                          # timestamp of stop (velocitiy 0 reached)
-
+        self.control_prep = []
+        self.liste = []
     # GETTER
     # currenttly not used
     def get_speed(self, absolute):  # absolute is boolean - true returns absolute value, false vectorial speed
@@ -105,76 +104,6 @@ class CarFree2D:
         self.waypoints.append(p)
         # raise Exception('The point (' + str(p.x) + '|' + str(p.y) + ') is too far away. Skipped.')
 
-    # not usable with EventQueue
-    # calculates the behaviour of the car for the whole time (only one time)
-    # works with x and y components
-    def update(self):   # TODO refactor this entry --> acc and vel no vector anymore
-
-        # VELOCITY
-        vx = Polynomial(0, 0, 0)
-        vy = Polynomial(0, 0, 0)
-        t_old = 0
-        velocity_x_old = 0
-        velocity_y_old = 0
-        for control in self.controller.controls:
-            # Control: [timestamp, ax, ay]
-            dt = control[0] - t_old
-            velocity_x_old = vx.get_value(dt)
-            velocity_y_old = vy.get_value(dt)
-            vx = control[1].integration().add_constant(velocity_x_old)
-            vy = control[2].integration().add_constant(velocity_y_old)
-            t_old = control[0]
-            self.velocity.append([vx, vy, control[0]])
-
-        # POSITION
-        sx = Polynomial(0, 0, self.spawn[0])
-        sy = Polynomial(0, 0, self.spawn[1])
-        t_old = 0
-        for entry in self.velocity:
-            dt = entry[2] - t_old
-            sx_old = sx.get_value(dt)
-            sy_old = sy.get_value(dt)
-            sx = entry[0].integration().add_constant(sx_old)
-            sy = entry[1].integration().add_constant(sy_old)
-            t_old = entry[2]
-            self.position.append([sx, sy, entry[2]])
-
-    # not usable with EventQueue
-    # calculates the behaviour of the car for the whole time (only one time)
-    # works with absolut values and angles
-    def update2(self):
-        # new Update routine
-
-        # POSITION and VELOCITY
-        x = self.spawn[0]
-        y = self.spawn[1]
-        t = 0
-        v = 0
-        for control in self.controls:
-            # Control: [timestamp, est_x, est_y, a, dir, stop]
-            stop = control[5]
-            t = round(control[0], 7)
-            direction = control[4]
-            a = control[3]
-            self.velocity.append([t, v, direction])  # [t, v, dir]
-            self.position.append([t, x, y])
-            if stop:
-                t_stop = t - v / a
-                dt = t-t_stop
-                x += (0.5*a*dt**2 + v*dt)*cos(direction)
-                y += (0.5*a*dt**2 + v*dt)*sin(direction)
-                t = t_stop
-                a = 0
-                v = 0
-                self.velocity.append([t, v, direction])  # [t, v, dir]
-                self.position.append([t, x, y])
-                break
-            x += (0.5*a*self.ts**2 + v*self.ts) * cos(direction)
-            y += (0.5*a*self.ts**2 + v*self.ts) * sin(direction)
-            v += a * self.ts
-
-        pass
-
     # creates spline for the given waypoints (from the *.json file)
     def create_spline(self):
         self.calculate_controls_equidistant(self.path.points)
@@ -216,7 +145,6 @@ class CarFree2D:
         # PREPARE CONTROLS: FILL LIST WITH ACC_MAX, CALCULATE DISTANCE TRAVELLED
         # control_prep: [timestamp, acceleration, distance traveled, velocity]
         # TODO works not for (to) short shapes --> need to be added!!!
-        control_prep = []
         distance = 0
         t = 0
         a = self.max_acceleration
@@ -226,7 +154,7 @@ class CarFree2D:
             # distance = a.integration().integration().get_value(t)
             distance = 0.5 * a * t ** 2
             vel = a * t
-            control_prep.append([t, a, round(distance, 7), vel])
+            self.control_prep.append([t, a, round(distance, 7), vel])
             i = k
 
         # distance = a.integration().integration().get_value(t + ts)
@@ -240,7 +168,7 @@ class CarFree2D:
             vel_ref = vel
             for j in range(n_ac_max, n_ac_max + 2):
                 t = round((j - i) * self.ts, 7)
-                control_prep.append([round(j * self.ts, 7), a, round(distance, 7), vel])
+                self.control_prep.append([round(j * self.ts, 7), a, round(distance, 7), vel])
                 distance = distance_ref + 0.5 * a_value * t ** 2 + vel_ref * t
                 vel += a_value * self.ts
 
@@ -255,7 +183,7 @@ class CarFree2D:
         distance_diff = vel * self.ts
         while distance < length_abs - distance_ref - distance_diff:
             j += 1
-            control_prep.append([round(j * self.ts, 7), 0, round(distance, 7), vel])
+            self.control_prep.append([round(j * self.ts, 7), 0, round(distance, 7), vel])
             distance += distance_diff
 
         # ADD DEC VALUES TO THE LIST
@@ -266,26 +194,56 @@ class CarFree2D:
         while vel >= 0:
             j += 1
             t = round(((j - n) * self.ts), 7)
-            control_prep.append([round(j * self.ts, 7), -a_value, round(distance, 7), vel])
+            self.control_prep.append([round(j * self.ts, 7), -a_value, round(distance, 7), vel])
             vel -= a_value * self.ts
             distance = distance_ref + -a_value * 0.5 * t ** 2 + vel_ref * t
 
-        vel = control_prep[-1][3]
-        t = control_prep[-1][0]
-        s = control_prep[-1][2]
+        vel = self.control_prep[-1][3]
+        t = self.control_prep[-1][0]
+        s = self.control_prep[-1][2]
         t_stop = t + vel / a_value
         s_stop = s + -a_value * 0.5 * (vel / a_value) ** 2 + vel * (vel / a_value)
-        control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
+        self.control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
 
         # CONTROLLER GEts COORDINATES FOR EACH ENTRY IN CONTROL PREP
-        for i in range(0, len(control_prep) - 1):
-            xy = planner.get_coordinates(control_prep[i][2])
-            control_prep[i] = [control_prep[i][0], control_prep[i][1], control_prep[i][3], xy[0], xy[1]]
+        for i in range(0, len(self.control_prep) - 1):
+            xy = planner.get_coordinates(self.control_prep[i][2])
+            self.control_prep[i] = [self.control_prep[i][0], self.control_prep[i][1], self.control_prep[i][3], xy[0], xy[1]]
 
         # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
         # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]
+        self.make_controls()
+
+    # used with EventQueue
+    # car gets controlled with specific values by an Event (car_control)
+    def control(self, t, acc, direction, stop):
+        # save current position and speed
+        #dt = t - self.time_last_control
+        dt = self.ts
+
+        self.liste.append(dt)
+        x = (0.5*(dt**2) * m.cos(direction) * acc) + (m.cos(direction) * self.last_velocity * dt) + self.last_position[0]
+        y = (0.5*(dt**2) * m.sin(direction) * acc) + (m.sin(direction) * self.last_velocity * dt) + self.last_position[1]
+
+        self.last_position = [x, y]
+
+        self.last_velocity += acc * dt
+
+        # update (control) the car
+        self.time_last_control = t
+        self.acceleration = acc
+        self.stop = stop
+
+        if stop:
+            self.stop_time = self.last_velocity / self.acceleration + self.time_last_control
+        else:
+            self.direction = direction
+
+    # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
+    # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]
+    def make_controls(self):
         stop = False
-        for control in control_prep:
+        for control in self.control_prep:
             if control[2] == 'CAR STOPPED':
                 pass
             else:
@@ -295,47 +253,25 @@ class CarFree2D:
                 est_point = Point(est_x, est_y)
                 acc = control[1]
                 try:
-                    next_x = control_prep[control_prep.index(control) + 1][3]
-                    next_y = control_prep[control_prep.index(control) + 1][4]
+                    next_x = self.control_prep[self.control_prep.index(control) + 1][3]
+                    next_y = self.control_prep[self.control_prep.index(control) + 1][4]
                     next_point = Point(next_x, next_y)
-                    dir = lib.angle(est_point, next_point)
+                    if not ((next_x == est_x) & (next_y == est_y)):
+                        dir = lib.angle(est_point, next_point)
+
                 except IndexError:
                     stop = True
-
-            self.controls.append([t, est_x, est_y, acc, dir, stop])
-            ev = Event(t, self, (t, self, acc, dir, stop), lambda: lib.eventqueue.car_control)
+                    dir = self.direction
+            # ev = Event(t, self, (t, self, acc, dir, stop), lambda: lib.eventqueue.car_control)
+            ev = Event(t, self, (t, self, lambda: lib.eventqueue.car_control, (t, self, acc, dir, stop)),
+                       lambda: lib.eventqueue.store_command)
             lib.eventqueue.add_event(ev)
-
-        self.controls.pop(-1)
-
-        pass
         # fills the self.controls list with acceleration values
-
-    # used with EventQueue
-    # car gets controlled with specific values by an Event (car_control)
-    def control(self, t, acc, direction, stop):
-        # save current position and speed
-        dt = t - self.time_last_control
-        x = 0.5*(dt**2) * m.cos(direction) * acc + m.cos(direction) * self.last_velocity * dt + self.last_position[0]
-        y = 0.5*(dt**2) * m.sin(direction) * acc + m.sin(direction) * self.last_velocity * dt + self.last_position[1]
-        self.last_position = [x, y]
-
-        self.last_velocity += acc * dt
-
-        # update (control) the car
-        self.time_last_control = t
-        self.acceleration = acc
-        self.direction = direction
-        self.stop = stop
-
-        if stop:
-            self.stop_time = self.last_velocity / self.acceleration + self.time_last_control
 
     # used with EventQueue
     # returns position of the car at specific time t
     # also more information available (but certainly not needed),f.e. acceleration, direction, steering, angle, ...
     def get_data(self, t):
-        dt = 0
         if not self.stop:
             dt = (t - self.time_last_control)
 
@@ -346,6 +282,10 @@ class CarFree2D:
             self.direction) * self.last_velocity * dt + self.last_position[0]
         y = 0.5 * (dt ** 2) * m.sin(self.direction) * self.acceleration + m.sin(
             self.direction) * self.last_velocity * dt + self.last_position[1]
+
+        x = self.last_position[0]
+        y = self.last_position[1]
+
         dir = round(self.direction, 5)
         if t == 0:
             dir = self.start_direction

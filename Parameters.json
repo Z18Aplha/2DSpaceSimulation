@@ -6,7 +6,8 @@
       "dt": 20,
       "dt_comment" : "data sampling rate",
       "ts": 2,
-      "ts_comment" : "controller sampling rate"
+      "ts_comment" : "controller sampling rate",
+      "latency" : 300
     },
   "SpaceFree2D":
     {
@@ -187,6 +188,7 @@
   },
   "CollisionControl":
   {
+    "activated": false,
     "obstacle_spacing": 0.1,
     "car_spacing": 0.5,
     "polling_dif": 0.001,

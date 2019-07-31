@@ -129,13 +129,13 @@ class CollisionControl:
                         if collide(c_cage, ob_cage):
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, self.coll_obstacles[self.coll_obst_cages.index(ob_cage)]):
-                                print("Car ", car_col.id, "Hard Collision with obstacle @", round(i*(lib.dt/1000), 3))
+                                print("Car ", car_col.id, "Hard Collision with obstacle @", round(self.list[0][0], 3))
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(lib.dt/1000), car_col.id, car_col.id]
+                                    self.god.collisions = [self.list[0][0], car_col.id, car_col.id]
                                 self.hardcollision_free = False
                                 break
                             else:
-                                print("Car", car_col.id, "Soft Collision with obstacle @", i * round((lib.dt / 1000), 3))
+                                print("Car", car_col.id, "Soft Collision with obstacle @", round(self.list[0][0], 3))
                     cars_temp.remove(car_col)
                     for car in cars_temp:
                         c2 = self.make_car_poly(car)
@@ -144,13 +144,14 @@ class CollisionControl:
                             self.collision_free, self.god.collisionfree = False, False
                             if collide(c, c2):
                                 print("Car", car_col.id, "Hard Collision with car", car.id, "@",
-                                      round(i*(lib.dt/1000), 3))
+                                      round(self.list[0][0], 3))
+                                self.hardcollision_free = False
                                 if self.god.collisions[0] == 10000:
-                                    self.god.collisions = [i*(lib.dt/1000), car_col.id, car.id]
+                                    self.god.collisions = [self.list[0][0], car_col.id, car.id]
                                 break
                             else:
                                 print("Car", car_col.id, "Soft Collision with car", car.id, "@",
-                                      round(i * (lib.dt / 1000), 3))
+                                      round(self.list[0][0], 3))
             for j in range(len(self.god.cars)):
                 del self.list[0]
         if self.collision_free:
@@ -165,16 +166,16 @@ class CollisionControl:
         cars_temp = self.coll_cars[:]
         for c in self.coll_cars:
             for ob_cage in self.coll_obst_cages:
-                if collide(c, object):
+                if collide(c, ob_cage):
                     if collide(c, self.coll_obstacles[self.coll_obst_cages.index(ob_cage)]):
                         print("Possible hard collision with obstacle: \t", "Car ", self.coll_cars.index(c), "@", t)
                     else:
                         print("Possible soft collision with obstacle: \t", "Car", self.coll_cars.index(c), "@", t)
-                cars_temp.remove(c)
-                for c2 in cars_temp:
-                    c2_cage = self.safety_zone(c2, self.car_spacing)
-                    if collide(c, c2_cage):
-                        if collide(c, c2):
-                            print("Possible hard collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)
-                        else:
-                            print("Possible soft collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)
+            cars_temp.remove(c)
+            for c2 in cars_temp:
+                c2_cage = self.safety_zone(c2, self.car_spacing)
+                if collide(c, c2_cage):
+                    if collide(c, c2):
+                        print("Possible hard collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)
+                    else:
+                        print("Possible soft collision: \t", "Car", self.coll_cars.index(c), "with Car", self.coll_cars.index(c)+1+cars_temp.index(c2), "@", t)

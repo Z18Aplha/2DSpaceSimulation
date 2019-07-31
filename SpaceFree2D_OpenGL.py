@@ -28,6 +28,8 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             self.back.append('red')
         self.obstacles = []
         self.coordinates = []
+        for car in lib.carList:
+            self.coordinates.append([])
         self.timestamp = 0
         self.dataset = lib.data[:]
         self.start = True
@@ -41,6 +43,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.collided = False
         self.running = True
         self.animSprite = 0
+
 
     def on_draw(self):
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
@@ -78,6 +81,10 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             self.show_waypoints()
 
             for car in self.g.cars:
+                if car.ghost:
+                    transparancy = .4
+                else:
+                    transparancy = 255
                 i = self.g.cars.index(car)
                 if self.start:
                     x0 = car.spawn[0]
@@ -91,12 +98,12 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     y3 = car.spawn[1] + car.width / 2
                     x4 = car.spawn[0] - car.length / 2
                     y4 = car.spawn[1] + car.width / 2
-                    self.coordinates.append([x1, y1, x2, y2, x3, y3, x4, y4, x0, y0, angle])
+                    self.coordinates[lib.carList.index(car)] = [x1, y1, x2, y2, x3, y3, x4, y4, x0, y0, angle]
                 try:
-                    glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2])
+                    glColor4f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1], colors.to_rgb(car.color)[2], transparancy)
                 except ValueError:
                     clr = self.hex_to_rgb(car.color)
-                    glColor3f(clr[0], clr[1], clr[2])
+                    glColor4f(clr[0], clr[1], clr[2], transparancy)
                 angle = self.coordinates[i][-1]
                 x0 = self.coordinates[i][-3]
                 y0 = self.coordinates[i][-2]
@@ -115,16 +122,16 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 radius = min(car.length, car.width) / 6
                 x, y = self.rotate(self.coordinates[i][0] + 1.5 * radius, self.coordinates[i][1] + 1.5 * radius, x0, y0,
                                    angle)
-                self.circle(x, y, radius * self.pxm)
+                self.circle(x, y, radius * self.pxm, transparancy)
                 x, y = self.rotate(self.coordinates[i][2] - 1.5 * radius, self.coordinates[i][3] + 1.5 * radius, x0, y0,
                                    angle)
-                self.circle(x, y, radius * self.pxm)
+                self.circle(x, y, radius * self.pxm, transparancy)
                 x, y = self.rotate(self.coordinates[i][4] - 1.5 * radius, self.coordinates[i][5] - 1.5 * radius, x0, y0,
                                    angle)
-                self.circle(x, y, radius * self.pxm)
+                self.circle(x, y, radius * self.pxm, transparancy)
                 x, y = self.rotate(self.coordinates[i][6] + 1.5 * radius, self.coordinates[i][7] - 1.5 * radius, x0, y0,
                                    angle)
-                self.circle(x, y, radius * self.pxm)
+                self.circle(x, y, radius * self.pxm, transparancy)
 
                 x, y = self.rotate(self.coordinates[i][0]+(self.coordinates[i][2]-self.coordinates[i][0])/2,
                                    self.coordinates[i][1]+(self.coordinates[i][7]-self.coordinates[i][1])/2, x0, y0,
@@ -137,7 +144,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 # Lights
                 size = (car.width / 10)
                 # Front
-                glColor3f(colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2])
+                glColor4f(colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], transparancy)
                 glBegin(GL_QUADS)
                 x, y = self.rotate(self.coordinates[i][2] - size / 2, self.coordinates[i][5]-2*size, x0, y0, angle)
                 glVertex2f(x, y)
@@ -149,6 +156,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 glVertex2f(x, y)
                 glEnd()
 
+                # Lightbeams
                 x1, y1 = self.rotate(self.coordinates[i][2] + size / 2, self.coordinates[i][5]-2*size, x0, y0, angle)
                 x2, y2 = self.rotate(self.coordinates[i][2] + 5*size, self.coordinates[i][5]-5*size, x0, y0, angle)
                 x3, y3 = self.rotate(self.coordinates[i][2] + 5*size, self.coordinates[i][5]+2*size, x0, y0, angle)
@@ -156,10 +164,10 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
                                      ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
                                       ),
-                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255,
+                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], transparancy,
                                               colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
                                               colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
-                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255)
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], transparancy)
                                       )
                                      )
                 glBegin(GL_QUADS)
@@ -181,14 +189,14 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
                                      ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
                                       ),
-                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255,
+                                     ('c4f', (colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], transparancy,
                                               colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
                                               colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 0,
-                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], 255)
+                                              colors.to_rgb(self.front[i])[0], colors.to_rgb(self.front[i])[1], colors.to_rgb(self.front[i])[2], transparancy)
                                       )
                                      )
                 # Back
-                glColor3f(colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1], colors.to_rgb(self.back[i])[2])
+                glColor4f(colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1], colors.to_rgb(self.back[i])[2], transparancy)
                 glBegin(GL_QUADS)
                 x, y = self.rotate(self.coordinates[i][0] + size / 2, self.coordinates[i][5] - 2 * size, x0, y0, angle)
                 glVertex2f(x, y)
@@ -208,9 +216,9 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                                      ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
                                       ),
                                      ('c4f', (colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
-                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[2], transparancy,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
-                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[2], transparancy,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
                                               colors.to_rgb(self.back[i])[2], 0,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
@@ -235,9 +243,9 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                                      ('v2f', (x1, y1, x2, y2, x3, y3, x4, y4)
                                       ),
                                      ('c4f', (colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
-                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[2], transparancy,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
-                                              colors.to_rgb(self.back[i])[2], 255,
+                                              colors.to_rgb(self.back[i])[2], transparancy,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
                                               colors.to_rgb(self.back[i])[2], 0,
                                               colors.to_rgb(self.back[i])[0], colors.to_rgb(self.back[i])[1],
@@ -269,13 +277,16 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             self.clear()
             self.animSprite.draw()
 
-    def circle(self, x, y, radius):
+    def on_mouse_press(self, x, y, button, modifiers):
+        print(round(x / self.pxm, 2), round(y/self.pxm, 2))
+
+    def circle(self, x, y, radius, t):
         iterations = int(2 * radius * math.pi)
         s = math.sin(2 * math.pi / iterations)
         c = math.cos(2 * math.pi / iterations)
 
         dx, dy = radius, 0
-        glColor3f(1, 1, 1)
+        glColor4f(1, 1, 1, t)
         glBegin(GL_TRIANGLE_FAN)
         glVertex2f(x, y)
         for i in range(iterations + 1):
@@ -351,6 +362,10 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
     def show_shape_optimized(self):
         if self.start:
             for car in self.g.cars:
+                if car.ghost:
+                    transparancy = .4
+                else:
+                    transparancy = 255
                 sections = len(car.shape[0])
                 x_old = car.spawn[0]
                 y_old = car.spawn[1]
@@ -361,11 +376,11 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                         x = car.shape[0][n][i]
                         y = car.shape[1][n][i]
                         try:
-                            glColor3f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1],
-                                      colors.to_rgb(car.color)[2])
+                            glColor4f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1],
+                                      colors.to_rgb(car.color)[2], transparancy)
                         except ValueError:
                             clr = self.hex_to_rgb(car.color)
-                            glColor3f(clr[0], clr[1], clr[2])
+                            glColor4f(clr[0], clr[1], clr[2], transparancy)
                         glBegin(GL_LINES)
                         glVertex2f(x_old * self.pxm, y_old * self.pxm)
                         glVertex2f(x * self.pxm, y * self.pxm)
@@ -386,7 +401,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             for i in range(self.counter):
                 im = imageio.imread('video/' + str(i) + '.png')
                 writer.append_data(im)
-            for i in range(2 * self.fps):
+            for i in range(self.fps):
                 writer.append_data(im)
             writer.close()
 
@@ -396,12 +411,17 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             #pyglet.app.exit()
         self.clear()
         self.start = False
-        if self.timestamp <= (self.g.collisions[0] + lib.dt/1000):
+        if self.timestamp <= self.g.collisions[0]:
             i = 0
             while i < len(self.dataset):
                 data = self.dataset[i]
                 if data[0] == self.timestamp:
-                    car = self.g.cars[data[1]]
+                    try:
+                        car = self.g.cars[data[1]]
+                    except TypeError:
+                        for c in self.g.cars[::-1]:
+                            if c.id == data[1]:
+                                car = c
                     x1 = data[2] - car.length / 2
                     y1 = data[3] - car.width / 2
                     x2 = data[2] + car.length / 2
@@ -412,8 +432,9 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     y4 = data[3] + car.width / 2
 
                     angle = data[4]
-
-                    self.coordinates[data[1]] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
+                    asdf = lib.carList.index(car)
+                    lib.carList.index(car)
+                    self.coordinates[lib.carList.index(car)] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
                     self.dataset.remove(data)
                 else:
                     if data[0] < self.timestamp:
@@ -421,7 +442,12 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     else:
                         if self.dataset[i-1][0] < self.timestamp:
                             data = self.dataset[i-1]
-                            car = self.g.cars[data[1]]
+                            try:
+                                car = self.g.cars[data[1]]
+                            except TypeError:
+                                for c in self.g.cars[::-1]:
+                                    if c.id == data[1]:
+                                        car = c
                             x1 = data[2] - car.length / 2
                             y1 = data[3] - car.width / 2
                             x2 = data[2] + car.length / 2
@@ -433,15 +459,15 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
 
                             angle = data[4]
 
-                            self.coordinates[data[1]] = [x1, y1, x2, y2, x3, y3, x4, y4, angle]
+                            self.coordinates[lib.carList.index(car)] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
                         break
 
         else:
-            self.stop = self.g.collisions[0]+4
+            self.stop = self.g.collisions[0]+3
             self.collided = True
         self.timestamp = round(self.timestamp + 1/self.fps, 3)
 
     def create_space(self):
-        print(f"\n max. animation duration: {self.g.last_timestamp:< 1.4} seconds")
+        print(f"\n max. animation duration: {min(self.g.last_timestamp, self.g.collisions[0]):< 1.4} seconds")
         pyglet.clock.schedule_interval(self.update, 1/self.fps)
         pyglet.app.run()
