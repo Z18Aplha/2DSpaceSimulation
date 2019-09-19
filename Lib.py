@@ -11,6 +11,9 @@ data = []
 collision = None
 coll_det_freq = None
 car_count = None
+k_p = None
+k_d = None
+last_timestamp = None
 
 
 # some setter methods
@@ -48,6 +51,15 @@ def set_carcount(c):
     global car_count
     car_count = c
 
+
+def set_k_p(kp):
+    global k_p
+    k_p = kp
+
+
+def set_k_d(kd):
+    global k_d
+    k_d = kd
 
 # some methods used my multiple classes
 def angle(p1: Point, p2: Point):

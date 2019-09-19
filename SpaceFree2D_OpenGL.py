@@ -44,7 +44,6 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         self.running = True
         self.animSprite = 0
 
-
     def on_draw(self):
         pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendFunc(pyglet.gl.GL_SRC_ALPHA, pyglet.gl.GL_ONE_MINUS_SRC_ALPHA)
@@ -69,7 +68,8 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             t1 = time.time()
             # self.show_interpolated_shape()
             # self.show_shape()
-            self.show_shape_optimized()
+            # self.show_shape_optimized()
+            self.show_shape_optimized_new()
             for obs in self.g.obstacles:
                 glColor3f(colors.to_rgb(obs.color)[0], colors.to_rgb(obs.color)[1], colors.to_rgb(obs.color)[2])
                 glBegin(GL_QUADS)
@@ -84,7 +84,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 if car.ghost:
                     transparancy = .4
                 else:
-                    transparancy = 255
+                    transparancy = 1
                 i = self.g.cars.index(car)
                 if self.start:
                     x0 = car.spawn[0]
@@ -393,11 +393,43 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         sprite = pyglet.sprite.Sprite(image, 0, 0)
         sprite.draw()
 
+    def show_shape_optimized_new(self):
+        if self.start:
+            for car in self.g.cars:
+                if car.ghost:
+                    transparancy = .4
+                else:
+                    transparancy = 255
+                sections = len(car.shape)
+                x_old = car.spawn[0]
+                y_old = car.spawn[1]
+
+                for point in car.shape:
+                    x = point[0]
+                    y = point[1]
+                    try:
+                        glColor4f(colors.to_rgb(car.color)[0], colors.to_rgb(car.color)[1],
+                                  colors.to_rgb(car.color)[2], transparancy)
+                    except ValueError:
+                        clr = self.hex_to_rgb(car.color)
+                        glColor4f(clr[0], clr[1], clr[2], transparancy)
+                    glBegin(GL_LINES)
+                    glVertex2f(x_old * self.pxm, y_old * self.pxm)
+                    glVertex2f(x * self.pxm, y * self.pxm)
+                    glEnd()
+                    x_old = x
+                    y_old = y
+            pyglet.image.get_buffer_manager().get_color_buffer().save('video/background.png')
+        pyglet.gl.glClearColor(0, 0, 0, 0)
+        image = pyglet.image.load("video/background.png")
+        sprite = pyglet.sprite.Sprite(image, 0, 0)
+        sprite.draw()
+
     def update(self, dt):
         if self.timestamp > self.stop:
             pyglet.clock.unschedule(self.update)
             im = 0
-            writer = imageio.get_writer('animation.gif', fps=self.fps)
+            writer = imageio.get_writer('animation.mp4', fps=self.fps)
             for i in range(self.counter):
                 im = imageio.imread('video/' + str(i) + '.png')
                 writer.append_data(im)
@@ -405,7 +437,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 writer.append_data(im)
             writer.close()
 
-            animation = pyglet.image.load_animation('animation.gif')
+            animation = pyglet.image.load_animation('animation.mp4')
             self.animSprite = pyglet.sprite.Sprite(animation)
             self.running = False
             #pyglet.app.exit()
@@ -431,8 +463,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     x4 = data[2] - car.length / 2
                     y4 = data[3] + car.width / 2
 
-                    angle = data[4]
-                    asdf = lib.carList.index(car)
+                    angle = data[-1]
                     lib.carList.index(car)
                     self.coordinates[lib.carList.index(car)] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
                     self.dataset.remove(data)
@@ -457,7 +488,7 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                             x4 = data[2] - car.length / 2
                             y4 = data[3] + car.width / 2
 
-                            angle = data[4]
+                            angle = data[-1]
 
                             self.coordinates[lib.carList.index(car)] = [x1, y1, x2, y2, x3, y3, x4, y4, data[2], data[3], angle]
                         break

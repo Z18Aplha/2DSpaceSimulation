@@ -1,14 +1,11 @@
-from CarFree2D import CarFree2D
+from newCarFree2D import CarFree2D
 from math import ceil
-from Point import Point
 from Obstacles2D import Obstacles2D
 from CollisionControl import CollisionControl
-from Polynomial import Polynomial
-import time
 from EventQueue import EventQueue
 from Event import Event
 import Lib as lib
-import csv
+
 
 class God:
 
@@ -43,8 +40,10 @@ class God:
         eq = EventQueue(self)
         lib.set_eventqueue(eq)
         lib.set_latency(self.latency)
-        self.eventlist_debug = []
+        lib.set_k_d(parameters["God"]["k_d"])
+        lib.set_k_p(parameters["God"]["k_p"])
 
+        self.eventlist_debug = []
 
 
     def file_read(self):
@@ -191,18 +190,12 @@ class God:
             #######
             # only for debugging
             try:
-                self.eventlist_debug.append([event.function, event.object.id, event.parameters])
+                self.eventlist_debug.append(event.time)
             except AttributeError:
                 self.eventlist_debug.append([event.function, event.object, event.parameters])
             ########
-
+            pass
             lib.eventqueue.exe(event.function(), event.parameters)
-        ######
-        # only for debugging -> eventqueue is printed in a txt-file
-        with open('log.txt', 'w') as myfile:
-            wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-            wr.writerows(self.eventlist_debug)
-        ######
 
         self.last_timestamp = lib.data[-1][0]
 

@@ -16,13 +16,9 @@ def start_simulation():
     g.simulate()
     s = SpaceFree2DOpenGL(g)
 
-    for c in g.cars:
-        plt.plot(c.liste)
-    plt.show()
-
     for data in lib.data:
-        time, obj, x, y, dir = data
-        print(f"{float(time):< 6.4}    {obj:<10}     {float(x):< 6.4}     {float(y):< 10.3}      {float(dir): < 3.3}")
+        time, obj, x, y, v, dir = data
+        # print(f"{float(time):< 6.4}    {obj:<10}     {float(x):< 6.4}     {float(y):< 10.3}      {float(dir): < 3.3}")
 
     s.create_space()
 

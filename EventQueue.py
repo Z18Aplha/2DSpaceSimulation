@@ -1,6 +1,8 @@
-from CarFree2D import CarFree2D
+from newCarFree2D import CarFree2D
 from Event import Event
 import Lib as lib
+import numpy as np
+from math import atan, cos, sin, tan
 import copy
 
 
@@ -12,6 +14,8 @@ class EventQueue:
         self.god = god
         self.last_get_data = 0
         self.last_coll_control = 0
+        self.last_control = 0
+        self.counter = []
         self.add_event(Event(0, None, (0,), lambda: lib.eventqueue.check_for_collision))
         self.add_event(Event(0, None, (0,), lambda: lib.eventqueue.get_data))
 
@@ -22,18 +26,10 @@ class EventQueue:
         for e in self.events[::-1]:
             if event.time >= e.time:
                 index = self.events.index(e)
-                # if an event with identical time, obj and function is added, the old one
-                # gets deleted
-                if (event.time == e.time) & (event.object == e.object) & (event.function == e.function):
-                    self.events.remove(e)
-                    self.events.insert(index, event)
+                if self.events[index-1].time != event.time:
+                    self.events.insert(index+1, event)
                     not_inserted = False
                     break
-                else:
-                    if self.events[index-1].time != event.time:
-                        self.events.insert(index+1, event)
-                        not_inserted = False
-                        break
         # if the event is not inserted yet, it has to be inserted as the first
         if not_inserted:
             self.events.insert(0, event)
@@ -54,6 +50,14 @@ class EventQueue:
             coll_event = Event(self.last_coll_control, None, (self.last_coll_control,), lambda: lib.eventqueue.check_for_collision)
             #lib.eventqueue.add_event(coll_event)
 
+        # Add control
+        difference = event.time - self.last_control
+        to_add = int(difference / (lib.ts / 1000))
+        for i in range(to_add):
+            self.last_control = round(self.last_control + (lib.ts / 1000), 7)
+            control_event = Event(self.last_control, None, (self.last_control,), lambda: lib.eventqueue.control)
+            lib.eventqueue.add_event(control_event)
+
     def exe(self, x, y):
         x(*y)
 
@@ -66,8 +70,8 @@ class EventQueue:
         car.create_spline()
         # if the latency differs from 0 a copy of the car is created which has no
         # latency and is displayed transparently
+
         if not lib.latency == 0:
-            #car.last_time_control = lib.latency / 1000
             car_copy = copy.deepcopy(car)
             car_copy.ghost = True
             car_copy.id = str(car_copy.id) + ' Ghost'
@@ -79,9 +83,8 @@ class EventQueue:
             lib.carList.append(car_copy)
 
     # gives the cars their acc and dir values
-    def car_control(self, t, car: CarFree2D, acc, direction, stop):
-        car.control(t, acc, direction, stop)
-        #print(t, acc, direction, stop)
+    def car_steering(self, t, car: CarFree2D, acc_x, acc_y,  stop, tag):
+        car.control(t, acc_x, acc_y, stop)
 
     # appends the current state to the library, its entries are needed to
     # display the car in the animation
@@ -91,6 +94,33 @@ class EventQueue:
 
     def check_for_collision(self, t):
         lib.collision.predict_collision(t)
+
+    def control(self, t):
+        for car in lib.carList:
+            self.car_control(t, car)
+
+    def car_control(self, t, car):
+        if not car.ghost:
+            ax, ay = car.controller.control(t)
+            if not (t > car.controller.stop_time) & car.stop:
+                ev = Event(t, car, (t, car, lambda: lib.eventqueue.correct_controls, (t, car, ax, ay)), lambda: lib.eventqueue.store_command)
+                lib.eventqueue.add_event(ev)
+
+    def correct_controls(self, t, car, ax, ay):
+        try:
+            for ev in self.events:
+                if ev.object == car:
+                    t, car, acc_x, acc_y, stop, tag = ev.parameters
+                    if tag == 'steering':
+                        acc_x -= ax
+                        acc_y -= ay
+
+                        # direction = tan(acc_y / acc_x)
+
+                        ev.parameters = (t, car, acc_x, acc_y, stop, 'control')
+                        break
+        except ValueError:
+            pass
 
     # the stored command gets applied
     def apply_control(self, func, parameters):
