@@ -181,27 +181,58 @@ class PathPlanner:
 
     def get_coordinates(self, length):
 
+        # Startparamter
         i = 0
         x = 0
         y = 0
         t = 0
-        stopped = False
+        stopped = False # Befehl, dass Auto anhalten soll (bleibt nicht zu vielfachen von ts stehen, sondern dazwsischen)
 
+        # t_to_length ist der Zusammenhang von Bogenlänge (zurückgelegter Weg) und Paramter (t) der Bezierkurve
+        #   --> Format: [[Liste aller t], [Liste der jeweiligen Bogenlängen]] beide Listen sind gleich lang und Elemtente gleichen indizes gehören zusammen
+        # length ist die Länge (Entfernung), bei der die Koordinaten gesucht werden
+        # Logik in der Schleife: erstes Element bildet Abbruchbedingung der Schleife, sobald die Entfernung zum Startpunkt größer wird, als gesucht
+        #   --> zweites Element: bildet Abbruchbedingung, sobald der Vorletzte Eintrag der Liste erreicht wurde --> Fahrzeug MUSS beim letzten Eintrag stehen
+        # i entspricht dem Parameter t in dieser Schleife und den nächsten Bedingungen
         while self.t_to_length[1][i] < length and i * self.dt < self.t_to_length[1][-1]:
             i += 1
 
+        # Hier wird eine Unterscheidung gemacht, ob das Fahrzeug einen Anhalt-Befehl erhalten soll, oder nicht.
+        # wenn i kleiner als der Vorletzte Wert in der Liste ist, dann soll das Auto nicht anhalten
         if i+1 < len(self.t_to_length[0]):
+            # Formel dient der Annäherung (linear)
+            # die beiden umliegenden Einträge im Diagramm werden "verbunden"
+            # Auf der resultierenden Gerade wird der Wert für die übergebene Entfernung "abgelesen"
+            # somit wird der Paramter t ziemlich genau bestimmt
             t = self.t_to_length[0][i] + self.dt / (
                     (self.t_to_length[1][i + 1] - self.t_to_length[1][i]) / (length - self.t_to_length[1][i]))
+
+        # falls i der Vorletzte Wert ist, so wird der Anhalten-Befehl (Flag) gesetzt und t wird einfach gesetzt
+        # der round Befehl ist, um Ungenauigkeiten (0,01500000002) abzufangen
         else:
             t = round(self.dt*i, 0)
             stopped = True
 
+        # ACHTUNG, nicht verwirren lassen
+        # um Zeilen zu sparen, (zwischenspeichern, etc) habe ich einfach die Variablen vertauscht
+        #
         i = int(t)
         t -= i
+
+        # wenn die Anhalten-Flag gesetzt ist, dann wird einfach der letzte Wegpunkt übergeben
+        # das geht in Ordnung, weil es sich bei den Einträgen der Liste um "Wunsch-", bzw. Zielpositionen handelt
         if stopped:
             x = self.point_list[-1].x
             y = self.point_list[-1].y
+        # Wenn das Auto nicht anhält, sich also noch auf der Kurve befindet, dann werden die Koordinaten mithilfe des
+        # Bernsteinpolynoms ausgerechnet.
+        # Hierfür existiert eine von mir erstellte Funktion (Formeln stammen aus Matheskripten)
+        # point_list enthält eine Liste aller berechneten Punte der Kurve (genau so viele, wie es Einträge in t_to_length gibt)
+        # --> Anzahl ist bestimmbar mittels dt (delta des Parameters) bei der Instanziierung vom PathPlanner (oder auch Json)
+        # b1, b2 sind die (vielbesprochenen) Hilfspunkte für die Bezierkurve
+        # Erläuterung der bernstein_polynomial: sie braucht den Paramter t, den ersten Punkt der Kurve (das ist der entsprechende Wegpunkt),
+        # die beiden Hilfspunkte (b1 und b2 - werden ganz am Anfang bestimmt, also nicht jedes Mal) und schließlich den Endpunkt (der nächste Wegpunkt in der Reihe)
+        # Die Funktion muss zwei mal aufgerufen werden; jeweils ein mal für die x und y Koordinate
         else:
             x = self.bernstein_polynomial(t, self.point_list[i].x, self.b1[i][0], self.b2[i][0], self.point_list[i + 1].x,
                                           self.point_list[i].y, self.b1[i][1], self.b2[i][1], self.point_list[i + 1].y)[0]

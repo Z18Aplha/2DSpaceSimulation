@@ -18,7 +18,6 @@ class CarFree2D:
         self.spawn = [spawn_x, spawn_y]             # spawnpoint
         self.position = []                          # not used for EventQueue
         self.direction = angle                      # direction of the car
-        self.start_direction = angle                # start-direction of the car
         self.last_position = [spawn_x, spawn_y]     # position after last control input
         self.length = size_x                        # in m
         self.width = size_y                         # in m
@@ -206,9 +205,18 @@ class CarFree2D:
         self.control_prep.append([t_stop, s_stop, 'CAR STOPPED'])
 
         # CONTROLLER GEts COORDINATES FOR EACH ENTRY IN CONTROL PREP
+        # diese Schleife verzögert das Programm bei einem langen Weg eines Autos enorm (bei 1ms Sampling)
+        # Lösung könnte eine Übergabe einer gesamten Liste sein, bei jedem Aufruf wird wieder eine Schleife gestartet (in der get_coordinates)
+        # Wenn also die die control_prep im ganzen Übergeben und bearbeitet würde, könnte ein bisschen Zeit gespart werden.
+        # vielleicht sogar genug, damit es nicht mehr (so sehr)
+        # vorher wurde bereits eine Liste mit [Zeitpunkt, Beschleunigungswert, ingesemat zurückgelegte Strecke] erstellt
+        # diese Funktion berechnet jetzt die entsprechenden Koordinaten auf der Bezier-Curve (Stichpunkt Parameter der Kurve)
+        # Die Schleife ruft jeden Punkt in der vorher erstellen Liste einzeln auf (das könnte das Problem sein)
+        # xy ist einfach eine Liste der Form [x, y]
         for i in range(0, len(self.control_prep) - 1):
             xy = planner.get_coordinates(self.control_prep[i][2])
             self.control_prep[i] = [self.control_prep[i][0], self.control_prep[i][1], self.control_prep[i][3], xy[0], xy[1]]
+
 
         # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
         # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]
@@ -290,4 +298,5 @@ class CarFree2D:
         if t == 0:
             dir = self.start_direction
         return [t, self.id, round(x, 4), round(y, 4), dir]
+
 
