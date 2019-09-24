@@ -1,14 +1,11 @@
-from CarFree2D import CarFree2D
+from newCarFree2D import CarFree2D
 from math import ceil
-from Point import Point
 from Obstacles2D import Obstacles2D
 from CollisionControl import CollisionControl
-from Channel import Channel
-from Polynomial import Polynomial
-import time
 from EventQueue import EventQueue
 from Event import Event
 import Lib as lib
+
 
 class God:
 
@@ -26,7 +23,6 @@ class God:
         self.cars = []  # list of each car in simulation
         self.last_timestamp = 0  # stores the last timestamp - to stop the simulation after it
         self.size = parameters["God"]["size"]  # size of the canvas in m
-        self.m2p_factor = parameters["God"]["m2p_factor"]  # factor to convert from meters to pixels
         # self.size = [0, 0]         # stores highest x and y values for matching the simulation area
         self.calculation = []  # list of polynomial for a specific period of time --> WHAT DOES THIS MEAN?
         self.simulation = []
@@ -34,13 +30,20 @@ class God:
         dt = parameters["God"]["dt"]  # time between each data point in ms
         lib.set_dt(dt)
         self.ts = parameters["God"]["ts"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
+        lib.set_ts(self.ts)
         self.obstacles = []
+        self.colldet = self.parameters["CollisionControl"]["activated"]
         self.collisions = [10000, 10000, 10000]
+        self.latency = parameters["God"]["latency"]
         # INSERT IN LIBRARY
-        lib.set_collision(CollisionControl(self))
         lib.set_coll_det_freq(parameters["CollisionControl"]["collision_detection_frequency"])
         eq = EventQueue(self)
         lib.set_eventqueue(eq)
+        lib.set_latency(self.latency)
+        lib.set_k_d(parameters["God"]["k_d"])
+        lib.set_k_p(parameters["God"]["k_p"])
+
+        self.eventlist_debug = []
 
 
     def file_read(self):
@@ -135,6 +138,10 @@ class God:
                                                                        self.size[1], self.size[0]+1, 0, self.size[0]-0.1,
                                                                        0], 'white'))
 
+        lib.set_collision(CollisionControl(self))
+        lib.set_carcount(len(self.cars))
+
+    # OLD - not used anymore
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
         for car in self.cars:
@@ -154,11 +161,6 @@ class God:
                 print("Collision occourred . . . Aborting")
                 break
 
-        c = Channel(self.parameters)
-        for s in self.calculation:
-            s_new = c.send(s[:])
-            self.simulation.append(s_new)
-
         for dat in self.simulation:
             data = dat[:]
             data[1] = ceil(data[1] / (self.ts / 1000)) * (self.ts / 1000)
@@ -176,45 +178,28 @@ class God:
 
     def simulate(self):
 
+        # Spline-Creation
         for car in self.cars:
-            event = Event(-1, car, (car,), lambda: lib.eventqueue.create_spline)
+            event = Event(-1, car, (car, ), lambda: lib.eventqueue.create_spline)
             lib.eventqueue.add_event(event)
 
-        for event in lib.eventqueue.events:
+        # executing the entries of the eventqueue
+        while lib.eventqueue.has_elements():
+            event = lib.eventqueue.events.pop(0)
+
+            #######
+            # only for debugging
+            try:
+                self.eventlist_debug.append(event.time)
+            except AttributeError:
+                self.eventlist_debug.append([event.function, event.object, event.parameters])
+            ########
+            pass
             lib.eventqueue.exe(event.function(), event.parameters)
 
-        '''
-        for car in self.cars:
-            id = car.id
-            a= 45
-            ev = Event(0, car, lambda id: eventqueue.create_spline(id))
-            eventqueue.add_event(ev)
+        self.last_timestamp = lib.data[-1][0]
 
-        for event in range(len(eventqueue.events)):
-            print(eventqueue.execute(event))
-        
-        # c_dt... time between each controller input in ms
-        for car in self.cars:
-            car.create_spline()
-        '''
-        for car in self.cars:
-            car.update2()
-
-        n = 0
-        cars = len(self.cars)
-        lists_ended = 0
-        while lists_ended < cars:
-            lists_ended = 0
-            for car in self.cars:
-                try:
-                    entry = [car.id, car.position[n][0], car.position[n][1], car.position[n][2], car.velocity[n][2]]
-                    self.calculation.append(entry)
-                except IndexError:
-                    lists_ended += 1
-                    pass
-            n += 1
-        pass
-
-        self.last_timestamp = self.calculation[-1][1]
-        coll = CollisionControl(self)
-        #coll.check_for_collision()
+        # Collision Detection
+        if self.colldet:
+            coll = CollisionControl(self)
+            coll.check_for_collision()

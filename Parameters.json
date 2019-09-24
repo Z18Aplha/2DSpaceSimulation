@@ -4,9 +4,12 @@
       "size": [30, 20],
       "m2p_factor": 20,
       "dt": 20,
-      "dt_comment" : "data sampling rate",
-      "ts": 2,
-      "ts_comment" : "controller sampling rate"
+      "dt_comment": "data sampling rate",
+      "ts": 20,
+      "ts_comment": "controller sampling rate",
+      "latency": 10,
+      "k_p": 0.5,
+      "k_d": 0
     },
   "SpaceFree2D":
     {
@@ -187,6 +190,7 @@
   },
   "CollisionControl":
   {
+    "activated": false,
     "obstacle_spacing": 0.1,
     "car_spacing": 0.5,
     "polling_dif": 0.001,
