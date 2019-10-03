@@ -42,6 +42,7 @@ class God:
         lib.set_latency(self.latency)
         lib.set_k_d(parameters["God"]["k_d"])
         lib.set_k_p(parameters["God"]["k_p"])
+        lib.set_pt(parameters["God"]["pt"])
 
         self.eventlist_debug = []
 
@@ -99,8 +100,10 @@ class God:
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
                 raise Exception('The path of a car cannot reach outside the canvas.',car_id, pos_x, pos_y, self.size[0], self.size[1])
 
-            self.cars[car_id].set_waypoint(pos_x, pos_y)
-
+            try:
+                self.cars[car_id].set_waypoint(pos_x, pos_y)
+            except IndexError:
+                print("No car with matching ID found")
             # CHECK IF EVERY CAR HAS AT LEAST ONE DESTINATION POINT
         for car in self.cars:
             if len(car.path.points) == 1:
@@ -147,7 +150,7 @@ class God:
         for car in self.cars:
             car.create_spline()
 
-        n = ceil(self.last_timestamp * 1000 / lib.dt)
+        n = ceil(self.last_timestamp * 1000 /  wlib.dt)
 
         for car in self.cars:
             car.update()

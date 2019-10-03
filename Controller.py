@@ -57,11 +57,11 @@ class Controller:
             self.last_x_delta = x_delta
             self.last_y_delta = y_delta
 
-            self.debug.append([x_delta, y_delta])
+            #self.debug.append([x_delta, y_delta])
 
         else:
             ax, ay = 0, 0
-
+        self.debug.append([ax,ay])
         return ax, ay
 
     def set_path(self, path):

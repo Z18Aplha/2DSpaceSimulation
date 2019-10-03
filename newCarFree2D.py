@@ -17,7 +17,8 @@ class CarFree2D:
         self.color = color                          # color code
         self.id = id                                # unique car id
         self.spawn = [spawn_x, spawn_y]             # spawnpoint
-        self.position = []                          # not used for EventQueue
+        self.position_x = []                          # not used for EventQueue
+        self.position_y = []
         self.direction = angle                      # direction of the car
         self.start_direction = angle                # start-direction of the car
         self.last_position = [spawn_x, spawn_y]     # position after last control input
@@ -31,6 +32,8 @@ class CarFree2D:
         self.max_velocity = max_vel                 # absolute limit of velocity
         # ACCELERATION
         self.acceleration = 0                       # acceleration given by last control input
+        self.acceleration_y = 0
+        self.acceleration_x = 0
         self.max_acceleration = max_acc             # absolute limit of acceleration
         # STEERING
         self.steering = 0                           # steering angle given by last control input
@@ -44,10 +47,14 @@ class CarFree2D:
         self.planner = None
         # CONTROLS
         self.time_last_control = 0                  # timestamp of last control input
+        self.time_last_update = 0                   # timestamp of last given acceleration
         self.stop = False                           # False: car drives, True: car stops (or will stop within the next time (t < ts)
         self.stop_time = 0                          # timestamp of stop (velocitiy 0 reached)
         self.control_prep = []
         self.controller = Controller(self, lib.k_p, lib.k_d)
+        # DEBUGGING
+        self.debugging1 = []
+        self.debugging2 = []
 
     # GETTER
     # currenttly not used
@@ -75,6 +82,7 @@ class CarFree2D:
         self.write_path()
         if not self.ghost:
             self.make_controls()
+        self.stop_time = self.planner.t_equi_in_t[-1]
 
     def write_path(self):
         for point in self.planner.path_from_v_equi_in_t:
@@ -83,8 +91,10 @@ class CarFree2D:
 
     # used with EventQueue
     # car gets controlled with specific values by an Event (car_control)
-    def control(self, t, acc_x, acc_y, stop):
-        # save current position and speed
+    def steer(self, t, acc_x, acc_y, stop):
+        # save current acceleration
+        self.acceleration_x = acc_x
+        self.acceleration_y = acc_y
         dt = t - self.time_last_control
         #dt = self.ts
 
@@ -97,17 +107,41 @@ class CarFree2D:
         self.last_velocity_y += acc_y * dt
         self.last_velocity = sqrt(self.last_velocity_x**2 + self.last_velocity_y**2)
 
-        # update (control) the car
+        # update (steer) the car
         self.time_last_control = t
         self.acceleration = sqrt(acc_x**2 + acc_y**2)
         self.stop = stop
-
+        self.position_x.append(x)
+        self.position_y.append(y)
+        self.debugging1.append([t, self.acceleration])
         if stop:
             # self.stop_time = self.last_velocity / self.acceleration + self.time_last_control
             self.stop_time = t
         else:
             comp_vel = complex(self.last_velocity_x, self.last_velocity_y)
             self.direction = np.angle([comp_vel])[0]
+
+    def control(self, t, a_x, a_y):
+        self.acceleration_x += a_x
+        self.acceleration_y += a_y
+        dt = t - self.time_last_control
+        # dt = self.ts
+
+        x = (0.5 * (dt ** 2) * self.acceleration_x) + self.last_velocity_x * dt + self.last_position[0]
+        y = (0.5 * (dt ** 2) * self.acceleration_y) + self.last_velocity_y * dt + self.last_position[1]
+
+        self.last_position = [x, y]
+
+        self.last_velocity_x += self.acceleration_x * dt
+        self.last_velocity_y += self.acceleration_y * dt
+        self.last_velocity = sqrt(self.last_velocity_x ** 2 + self.last_velocity_y ** 2)
+
+        # update (control) the car
+        self.time_last_control = t
+        self.acceleration = sqrt(self.acceleration_x ** 2 + self.acceleration_y ** 2)
+        self.debugging1.append([t, self.acceleration])
+        comp_vel = complex(self.last_velocity_x, self.last_velocity_y)
+        self.direction = np.angle([comp_vel])[0]
 
     # CONVERTING CONTROL_PREP INTO CONTROLS FOR CAR
     # [timestamp, estimated x, estimated y, abs(acceleration), direction to drive]

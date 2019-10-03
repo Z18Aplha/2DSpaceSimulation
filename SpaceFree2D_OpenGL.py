@@ -437,10 +437,10 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 writer.append_data(im)
             writer.close()
 
-            animation = pyglet.image.load_animation('animation.mp4')
-            self.animSprite = pyglet.sprite.Sprite(animation)
+            # animation = pyglet.image.load_animation('animation.mp4')
+            # self.animSprite = pyglet.sprite.Sprite(animation)
             self.running = False
-            #pyglet.app.exit()
+            pyglet.app.exit()
         self.clear()
         self.start = False
         if self.timestamp <= self.g.collisions[0]:

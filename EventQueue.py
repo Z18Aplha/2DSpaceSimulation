@@ -56,7 +56,7 @@ class EventQueue:
         for i in range(to_add):
             self.last_control = round(self.last_control + (lib.ts / 1000), 7)
             control_event = Event(self.last_control, None, (self.last_control,), lambda: lib.eventqueue.control)
-            lib.eventqueue.add_event(control_event)
+            #lib.eventqueue.add_event(control_event)
 
     def exe(self, x, y):
         x(*y)
@@ -84,7 +84,7 @@ class EventQueue:
 
     # gives the cars their acc and dir values
     def car_steering(self, t, car: CarFree2D, acc_x, acc_y,  stop, tag):
-        car.control(t, acc_x, acc_y, stop)
+        car.steer(t, acc_x, acc_y, stop)
 
     # appends the current state to the library, its entries are needed to
     # display the car in the animation
@@ -97,14 +97,18 @@ class EventQueue:
 
     def control(self, t):
         for car in lib.carList:
-            self.car_control(t, car)
+            if not car.ghost:
+                ax, ay = car.controller.control(t)
+                ev = Event(t, car, (t, car, lambda: lib.eventqueue.car_control, (t, car, ax, ay)),
+                           lambda: lib.eventqueue.store_command)
+                if t <= car.stop_time:
+                    lib.eventqueue.add_event(ev)
+                # if not (t > car.controller.stop_time) & car.stop:
+                #     ev = Event(t, car, (t, car, lambda: lib.eventqueue.correct_controls, (t, car, ax, ay)), lambda: lib.eventqueue.store_command)
+                #     lib.eventqueue.add_event(ev)
 
-    def car_control(self, t, car):
-        if not car.ghost:
-            ax, ay = car.controller.control(t)
-            if not (t > car.controller.stop_time) & car.stop:
-                ev = Event(t, car, (t, car, lambda: lib.eventqueue.correct_controls, (t, car, ax, ay)), lambda: lib.eventqueue.store_command)
-                lib.eventqueue.add_event(ev)
+    def car_control(self, t, car, ax, ay):
+        car.control(t, ax, ay)
 
     def correct_controls(self, t, car, ax, ay):
         try:
@@ -112,8 +116,8 @@ class EventQueue:
                 if ev.object == car:
                     t, car, acc_x, acc_y, stop, tag = ev.parameters
                     if tag == 'steering':
-                        acc_x -= ax
-                        acc_y -= ay
+                        acc_x += ax
+                        acc_y += ay
 
                         # direction = tan(acc_y / acc_x)
 

@@ -2,18 +2,19 @@
   "God":
     {
       "size": [30, 20],
-      "m2p_factor": 20,
-      "dt": 100,
+      "dt": 10,
       "dt_comment": "data sampling rate",
-      "ts": 100,
+      "ts": 10,
       "ts_comment": "controller sampling rate",
-      "latency": 0.1,
+      "pt": 10,
+      "pt_comment": "PathPlanner sampling rate",
+      "latency": 20,
       "k_p": -0.5,
       "k_d": -0.2
     },
   "SpaceFree2D":
     {
-      "px_width": 600,
+      "px_width": 800,
       "fps": 50
     },
   "Cars":
@@ -23,44 +24,11 @@
         "spawn_x": 5.0,
         "spawn_y": 5.0,
         "angle": 0.787,
-        "length": 4.0,
-        "width": 2.0,
-        "max_vel": 40,
-        "max_acc": 5,
+        "length": 1,
+        "width": 0.5,
+        "max_vel": 4,
+        "max_acc": 2,
         "color": "#FFAF00"
-      },
-      {
-        "index": 1,
-        "spawn_x": 10,
-        "spawn_y": 10,
-        "angle":  1.58,
-        "length": 2,
-        "width": 4,
-        "max_vel": 20,
-        "max_acc": 4,
-        "color": "#CDAA7D"
-      },
-      {
-        "index": 2,
-        "spawn_x": 20,
-        "spawn_y": 10,
-        "angle":  1.58,
-        "length": 2,
-        "width": 1,
-        "max_vel": 20,
-        "max_acc": 4,
-        "color": "purple"
-      },
-      {
-        "index": 3,
-        "spawn_x": 5,
-        "spawn_y": 10,
-        "angle":  -0.675,
-        "length": 5,
-        "width": 2,
-        "max_vel": 10,
-        "max_acc": 4,
-        "color": "red"
       }
     ],
   "Path":

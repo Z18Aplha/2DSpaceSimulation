@@ -5,6 +5,7 @@ import numpy as np
 eventqueue = None
 dt = None
 ts = None
+pt = None
 latency = None
 carList = []
 data = []
@@ -30,6 +31,11 @@ def set_dt(t):
 def set_ts(t):
     global ts
     ts = t
+
+
+def set_pt(t):
+    global pt
+    pt = t
 
 
 def set_collision(c):
