@@ -92,19 +92,17 @@ class CarFree2D:
     # used with EventQueue
     # car gets controlled with specific values by an Event (car_control)
     def steer(self, t, acc_x, acc_y, stop):
-        # save current acceleration
-        self.acceleration_x = acc_x
-        self.acceleration_y = acc_y
+
         dt = t - self.time_last_control
         #dt = self.ts
 
-        x = (0.5*(dt**2) * acc_x) + self.last_velocity_x * dt + self.last_position[0]
-        y = (0.5*(dt**2) * acc_y) + self.last_velocity_y * dt + self.last_position[1]
+        x = (0.5*(dt**2) * self.acceleration_x) + self.last_velocity_x * dt + self.last_position[0]
+        y = (0.5*(dt**2) * self.acceleration_y) + self.last_velocity_y * dt + self.last_position[1]
 
         self.last_position = [x, y]
 
-        self.last_velocity_x += acc_x * dt
-        self.last_velocity_y += acc_y * dt
+        self.last_velocity_x += self.acceleration_x * dt
+        self.last_velocity_y += self.acceleration_y * dt
         self.last_velocity = sqrt(self.last_velocity_x**2 + self.last_velocity_y**2)
 
         # update (steer) the car
@@ -113,6 +111,9 @@ class CarFree2D:
         self.stop = stop
         self.position_x.append(x)
         self.position_y.append(y)
+        # save new acceleration
+        self.acceleration_x = acc_x
+        self.acceleration_y = acc_y
         self.debugging1.append([t, self.acceleration])
         if stop:
             # self.stop_time = self.last_velocity / self.acceleration + self.time_last_control

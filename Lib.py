@@ -6,9 +6,11 @@ eventqueue = None
 dt = None
 ts = None
 pt = None
+fps = None
 latency = None
 carList = []
 data = []
+vis_data = []
 collision = None
 coll_det_freq = None
 car_count = None
@@ -37,6 +39,10 @@ def set_pt(t):
     global pt
     pt = t
 
+
+def set_fps(framerate):
+    global fps
+    fps = framerate
 
 def set_collision(c):
     global collision

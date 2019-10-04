@@ -81,7 +81,7 @@ def start_simulation():
     plt.legend()
 
     plt.show()
-    #s.create_space()
+    s.create_space()
 
 
 

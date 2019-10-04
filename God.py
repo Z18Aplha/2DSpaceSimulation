@@ -31,6 +31,7 @@ class God:
         lib.set_dt(dt)
         self.ts = parameters["God"]["ts"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
         lib.set_ts(self.ts)
+        lib.set_fps(parameters["SpaceFree2D"]["fps"])
         self.obstacles = []
         self.colldet = self.parameters["CollisionControl"]["activated"]
         self.collisions = [10000, 10000, 10000]
@@ -43,7 +44,6 @@ class God:
         lib.set_k_d(parameters["God"]["k_d"])
         lib.set_k_p(parameters["God"]["k_p"])
         lib.set_pt(parameters["God"]["pt"])
-
         self.eventlist_debug = []
 
 
@@ -150,7 +150,7 @@ class God:
         for car in self.cars:
             car.create_spline()
 
-        n = ceil(self.last_timestamp * 1000 /  wlib.dt)
+        n = ceil(self.last_timestamp * 1000 / lib.dt)
 
         for car in self.cars:
             car.update()
