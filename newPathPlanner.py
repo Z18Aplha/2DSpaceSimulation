@@ -575,5 +575,5 @@ class PathPlanner:
         (self.t_equi_in_t, self.path_from_v_equi_in_t, self.velocity_from_v_equi_in_t,
          self.acceleration_from_v_equi_in_t, self.s_from_v_equi_in_t, self.v_equi_in_t, self.a_from_v_equi_in_t) = \
             self.getQuinticBezierTrajectory(path_points, elongation_factor=1.2, speed_start=0, speed_end=0,
-                                            t_delta_equi_in_t=lib.pt/1000, plots_enabled=False)
+                                            t_delta_equi_in_t=lib.pt, plots_enabled=False)
 

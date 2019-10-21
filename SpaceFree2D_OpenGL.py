@@ -432,7 +432,6 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
             self.start = True
             self.show_shape_optimized_new()
 
-
     def update(self, dt):
         if self.timestamp > self.stop:
             pyglet.clock.unschedule(self.update)

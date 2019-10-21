@@ -2,18 +2,19 @@
   "God":
     {
       "size": [30, 20],
-      "m2p_factor": 20,
-      "dt": 100,
+      "dt": 5,
       "dt_comment": "data sampling rate",
-      "ts": 100,
+      "ts": 5,
       "ts_comment": "controller sampling rate",
-      "latency": 0.1,
+      "pt": 5,
+      "pt_comment": "PathPlanner sampling rate",
+      "latency": 20,
       "k_p": -0.5,
       "k_d": -0.2
     },
   "SpaceFree2D":
     {
-      "px_width": 600,
+      "px_width": 800,
       "fps": 50
     },
   "Cars":

@@ -55,6 +55,11 @@ class CarFree2D:
         # DEBUGGING
         self.debugging1 = []
         self.debugging2 = []
+        self.dc_pos = []
+        dim = len(lib.statespace.A)
+        self.old_state = [np.zeros(dim).reshape(-1, 1), np.zeros(dim).reshape(-1, 1)]
+        self.state = [np.zeros(dim), np.zeros(dim)]
+        self.counter = 0
 
     # GETTER
     # currenttly not used
@@ -88,6 +93,20 @@ class CarFree2D:
         for point in self.planner.path_from_v_equi_in_t:
             self.shape.append([np.real(point), np.imag(point)])
         pass
+
+    def test_dc_motor(self, ax, ay):
+        self.counter += 1
+        # x direction:
+        test = lib.statespace.B.A.dot(ax)
+        test2 = lib.statespace.A.A.dot(self.old_state[0])
+        self.state[0] = lib.statespace.A.A.dot(self.old_state[0]) + lib.statespace.B.A.dot(ax)
+        x = lib.statespace.C.A.dot(self.old_state[0]) + lib.statespace.D.A.dot(ax)
+        # y direction:
+        self.state[1] = lib.statespace.A.A.dot(self.old_state[1]) + lib.statespace.B.A.dot(ay)
+        y = lib.statespace.C.A.dot(self.old_state[1]) + lib.statespace.D.A.dot(ay)
+
+        self.old_state = self.state
+        return x[0][0], y[0][0]
 
     # used with EventQueue
     # car gets controlled with specific values by an Event (car_control)
@@ -155,7 +174,7 @@ class CarFree2D:
                 stop = True
             ev = Event(t, self, (t, self, np.real(acc), np.imag(acc), stop, "steering"), lambda: lib.eventqueue.car_steering)
             lib.eventqueue.add_event(ev)
-            t += lib.dt/1000
+            t += lib.dt
         # fills the self.controls list with acceleration values
         self.controller.set_path(self.planner.path_from_v_equi_in_t)
 
@@ -165,7 +184,7 @@ class CarFree2D:
     def get_data(self, t):
         if self.ghost:
             try:
-                index = int(t / (lib.dt/1000))
+                index = int(t / lib.dt)
                 point = self.planner.path_from_v_equi_in_t[index]
                 vel = self.planner.velocity_from_v_equi_in_t[index]
                 dir = np.angle([vel])

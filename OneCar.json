@@ -2,13 +2,13 @@
   "God":
     {
       "size": [30, 20],
-      "dt": 10,
+      "dt": 0.005,
       "dt_comment": "data sampling rate",
-      "ts": 10,
+      "ct": 0.005,
       "ts_comment": "controller sampling rate",
-      "pt": 10,
+      "pt": 0.005,
       "pt_comment": "PathPlanner sampling rate",
-      "latency": 20,
+      "latency": 0.02,
       "k_p": -0.5,
       "k_d": -0.2
     },
@@ -17,6 +17,19 @@
       "px_width": 800,
       "fps": 50
     },
+  "DC-Motor":
+  {
+    "Jm": 0.03,
+    "Bm": 0.1,
+    "Kme": 0.01,
+    "Kmt": 0.01,
+    "Rm": 1,
+    "Lm": 0.5,
+    "Kdm": 20,
+    "Kpm": 170,
+    "Kim": 330,
+    "Nm": 83
+  },
   "Cars":
     [
       {

@@ -30,7 +30,7 @@ class Controller:
             #         pass
 
             try:
-                index = int(t / (lib.dt/1000))
+                index = int(t / lib.dt)
                 point = self.path[index]
             except IndexError:
                 point = self.path[-1]
@@ -48,8 +48,8 @@ class Controller:
 
             dir = act_data[-1]
 
-            vx = (x_delta - self.last_x_delta) / (lib.ts / 1000)
-            vy = (y_delta - self.last_y_delta) / (lib.ts / 1000)
+            vx = (x_delta - self.last_x_delta) / lib.ct
+            vy = (y_delta - self.last_y_delta) / lib.ct
 
             ax = lib.k_p * x_delta + lib.k_d * vx
             ay = lib.k_p * y_delta + lib.k_d * vy

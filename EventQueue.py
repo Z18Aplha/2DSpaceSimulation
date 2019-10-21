@@ -38,9 +38,9 @@ class EventQueue:
 
         # Add get_data
         difference = event.time - self.last_get_data
-        to_add = int(difference / (lib.dt/1000))
+        to_add = int(difference / lib.dt)
         for i in range(to_add):
-            self.last_get_data = round(self.last_get_data + (lib.dt/1000), 7)
+            self.last_get_data = round(self.last_get_data + lib.dt, 7)
             data_event = Event(self.last_get_data, None, (self.last_get_data,), lambda: lib.eventqueue.get_data)
             lib.eventqueue.add_event(data_event)
 
@@ -63,9 +63,9 @@ class EventQueue:
 
         # Add control
         difference = event.time - self.last_control
-        to_add = int(difference / (lib.ts / 1000))
+        to_add = int(difference / lib.ct)
         for i in range(to_add):
-            self.last_control = round(self.last_control + (lib.ts / 1000), 7)
+            self.last_control = round(self.last_control + lib.ct, 7)
             control_event = Event(self.last_control, None, (self.last_control,), lambda: lib.eventqueue.control)
             #lib.eventqueue.add_event(control_event)
 

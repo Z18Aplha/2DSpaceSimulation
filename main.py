@@ -66,23 +66,48 @@ def start_simulation():
         except IndexError:
             acc_pos_y.append(0.5 * planner_acc_x[i] * ((lib.pt / 1000) ** 2) + acc_vel_y[i] * (lib.pt / 1000) + g.cars[0].spawn[1])
 
-    plt.show()
+    # plt.show()
+    #
+    # plt.plot(acc_pos_x - planner_pos_x, label='diff x int')
+    # plt.plot(acc_pos_y - planner_pos_y, label='diff y int')
+    # plt.plot(sim_pos_x - planner_pos_x, label='diff x sim')
+    # plt.plot(sim_pos_y - planner_pos_y, label='diff y sim')
+    # plt.legend()
+    # plt.show()
+    #plt.plot(acc_pos_x, acc_pos_y, label='integrated')
+    #plt.plot(planner_pos_x, planner_pos_y, label='planner')
+    plt.plot(sim_pos_x, sim_pos_y, '.', label='simulated')
 
-    plt.plot(acc_pos_x - planner_pos_x, label='diff x int')
-    plt.plot(acc_pos_y - planner_pos_y, label='diff y int')
-    plt.plot(sim_pos_x - planner_pos_x, label='diff x sim')
-    plt.plot(sim_pos_y - planner_pos_y, label='diff y sim')
+    #plt.show()
+
+    path_x = []
+    path_y = []
+
+    car = g.cars[0]
+
+    for data in car.planner.acceleration_from_v_equi_in_t:
+        x, y = car.test_dc_motor(data.real, data.imag)
+        path_x.append(x+car.spawn[0])
+        path_y.append(y+car.spawn[1])
+
+    plt.plot(path_x, path_y, label='DC')
+
+
+    px = []
+    py = []
+    i = 0
+    for p_x, p_y in zip(path_x, path_y):
+        if i == 30:
+            px.append(p_x)
+            py.append(p_y)
+            i = 0
+        i += 1
+
+    #plt.plot(px, py, 'x', label='DC')
+    plt.title('Path')
     plt.legend()
-    plt.show()
-    plt.plot(acc_pos_x, acc_pos_y, label='integrated')
-    plt.plot(planner_pos_x, planner_pos_y, label='planner')
-    plt.plot(sim_pos_x, sim_pos_y, label='simulated')
-
-    plt.legend()
-
     plt.show()
     s.create_space()
-
 
 
 if __name__ == "__main__":
