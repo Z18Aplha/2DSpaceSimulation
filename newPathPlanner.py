@@ -41,7 +41,7 @@ class PathPlanner:
     ### FUNCTION DEFINITIONS ###
     ############################
     def getQuinticBezierTrajectory(self, points, mode='calculate bezier', elongation_factor=1 / 2,
-                                   max_centripetal_acc=0.1, orientation_start=None, orientation_end=None, speed_start=0,
+                                   max_centripetal_acc=0.5, orientation_start=None, orientation_end=None, speed_start=0,
                                    speed_end=0, t_delta_equi_in_t=0.1, plots_enabled=True):
 
         ##################################################
@@ -445,16 +445,16 @@ class PathPlanner:
             ####################################################################
             #   PLOT 1D VARIABLES OVER TIME (I.E., OVER THE ARC LENGTH) ########
             ####################################################################
-            fig_counter += 1
-            fig = plt.figure(fig_counter)
-            ax = plt.subplot(111)
-            ax.scatter(t_equi_in_t, s_from_v_equi_in_t, marker='.', c='black', alpha=1)
-            ax.scatter(t_equi_in_t, v_equi_in_t, marker='.', c='red', alpha=1)
-            ax.scatter(t_equi_in_t, a_from_v_equi_in_t, marker='.', c='green', alpha=1)
-            ax.set_title('Profiles along the curve (therefore 1D)')
-            ax.set_xlabel('Time t / s')
-            ax.set_ylabel('Position / Speed / Acceleration')
-            ax.legend(('Position / m', 'Speed / (m/s)', 'Acceleration / (m/s^2)'))
+            # fig_counter += 1
+            # fig = plt.figure(fig_counter)
+            # ax = plt.subplot(111)
+            # ax.scatter(t_equi_in_t, s_from_v_equi_in_t, marker='.', c='black', alpha=1)
+            # ax.scatter(t_equi_in_t, v_equi_in_t, marker='.', c='red', alpha=1)
+            # ax.scatter(t_equi_in_t, a_from_v_equi_in_t, marker='.', c='green', alpha=1)
+            # ax.set_title('Profiles along the curve (therefore 1D)')
+            # ax.set_xlabel('Time t / s')
+            # ax.set_ylabel('Position / Speed / Acceleration')
+            # ax.legend(('Position / m', 'Speed / (m/s)', 'Acceleration / (m/s^2)'))
 
             ##########################################################
             #   GET 2D VARIABLES (POS, VEL, ACC) FROM 1D VARIABLES ###
@@ -478,33 +478,33 @@ class PathPlanner:
             ####################################################################
             #   PLOT 1D VARIABLES OVER TIME ####################################
             ####################################################################
-            fig_counter += 1
-            fig = plt.figure(fig_counter)
-            ax = plt.subplot(111)
-            ax.scatter(t_equi_in_t, np.real(path_from_v_equi_in_t), marker='.', c='black', alpha=1)
-            ax.scatter(t_equi_in_t, np.imag(path_from_v_equi_in_t), marker='.', c='black', alpha=0.5)
-            ax.scatter(t_equi_in_t, np.real(velocity_from_v_equi_in_t), marker='.', c='red', alpha=1)
-            ax.scatter(t_equi_in_t, np.imag(velocity_from_v_equi_in_t), marker='.', c='red', alpha=0.5)
-            ax.scatter(t_equi_in_t, np.real(acceleration_from_v_equi_in_t), marker='.', c='green', alpha=1)
-            ax.scatter(t_equi_in_t, np.imag(acceleration_from_v_equi_in_t), marker='.', c='green', alpha=0.5)
-            ax.set_title('Path / Velocity / Acceleration over time (in x and y direction)')
-            ax.set_xlabel('Time t / s')
-            ax.set_ylabel('Path / Velocity / Acceleration')
-            ax.legend(('Position in x / m', 'Position in y / m', 'Velocity in x / m', 'Velocity in y / m',
-                       'Acceleration in x / m', 'Acceleration in y / m'))
+            # fig_counter += 1
+            # fig = plt.figure(fig_counter)
+            # ax = plt.subplot(111)
+            # ax.scatter(t_equi_in_t, np.real(path_from_v_equi_in_t), marker='.', c='black', alpha=1)
+            # ax.scatter(t_equi_in_t, np.imag(path_from_v_equi_in_t), marker='.', c='black', alpha=0.5)
+            # ax.scatter(t_equi_in_t, np.real(velocity_from_v_equi_in_t), marker='.', c='red', alpha=1)
+            # ax.scatter(t_equi_in_t, np.imag(velocity_from_v_equi_in_t), marker='.', c='red', alpha=0.5)
+            # ax.scatter(t_equi_in_t, np.real(acceleration_from_v_equi_in_t), marker='.', c='green', alpha=1)
+            # ax.scatter(t_equi_in_t, np.imag(acceleration_from_v_equi_in_t), marker='.', c='green', alpha=0.5)
+            # ax.set_title('Path / Velocity / Acceleration over time (in x and y direction)')
+            # ax.set_xlabel('Time t / s')
+            # ax.set_ylabel('Path / Velocity / Acceleration')
+            # ax.legend(('Position in x / m', 'Position in y / m', 'Velocity in x / m', 'Velocity in y / m',
+            #            'Acceleration in x / m', 'Acceleration in y / m'))
 
             ####################################################################
             #   PLOT TRAJECTORY IN SPACE, INLC. CONTROL POINTS (EQUI IN t) #####
             ####################################################################
-            fig_counter += 1
-            fig = plt.figure(fig_counter)
-            ax = plt.subplot(111)
-            ax.scatter(np.real(path_from_v_equi_in_t), np.imag(path_from_v_equi_in_t), marker='.', c='black', alpha=1)
-            ax.scatter(np.real(points), np.imag(points), marker='.', c='red', alpha=1)
-            ax.set_title('Path in space (equidistant in t), t_total=' + '{:0.3f}'.format(t_equi_in_t[-1]) + 's')
-            ax.set_xlabel('Dimension x / m')
-            ax.set_ylabel('Dimension y / m')
-            ax.legend(('Control points', 'Input points'))
+            # fig_counter += 1
+            # fig = plt.figure(fig_counter)
+            # ax = plt.subplot(111)
+            # ax.scatter(np.real(path_from_v_equi_in_t), np.imag(path_from_v_equi_in_t), marker='.', c='black', alpha=1)
+            # ax.scatter(np.real(points), np.imag(points), marker='.', c='red', alpha=1)
+            # ax.set_title('Path in space (equidistant in t), t_total=' + '{:0.3f}'.format(t_equi_in_t[-1]) + 's')
+            # ax.set_xlabel('Dimension x / m')
+            # ax.set_ylabel('Dimension y / m')
+            # ax.legend(('Control points', 'Input points'))
 
             if plots_enabled:
                 plt.show()
@@ -575,5 +575,5 @@ class PathPlanner:
         (self.t_equi_in_t, self.path_from_v_equi_in_t, self.velocity_from_v_equi_in_t,
          self.acceleration_from_v_equi_in_t, self.s_from_v_equi_in_t, self.v_equi_in_t, self.a_from_v_equi_in_t) = \
             self.getQuinticBezierTrajectory(path_points, elongation_factor=1.2, speed_start=0, speed_end=0,
-                                            t_delta_equi_in_t=lib.dt/1000, plots_enabled=False)
+                                            t_delta_equi_in_t=lib.pt, plots_enabled=False)
 

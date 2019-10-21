@@ -8,7 +8,7 @@ from pyglet import clock
 import imageio
 import Lib as lib
 import numpy as np
-
+import os as os
 
 class SpaceFree2DOpenGL(pyglet.window.Window):
 
@@ -31,12 +31,12 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
         for car in lib.carList:
             self.coordinates.append([])
         self.timestamp = 0
-        self.dataset = lib.data[:]
+        self.dataset = lib.vis_data[:]
         self.start = True
         self.stop = g.last_timestamp
         self.counter = 0
         self.blink_counter = 0
-        self.fps = g.parameters["SpaceFree2D"]["fps"]
+        self.fps = lib.fps
         super().__init__(caption="AVG Simulator", width=self.px_width, height=self.px_height, visible=True)
         self.time = []
         self.currentfps = []
@@ -400,7 +400,6 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     transparancy = .4
                 else:
                     transparancy = 255
-                sections = len(car.shape)
                 x_old = car.spawn[0]
                 y_old = car.spawn[1]
 
@@ -419,11 +418,19 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                     glEnd()
                     x_old = x
                     y_old = y
+            try:
+                os.remove('video/background.png')
+            except FileNotFoundError:
+                pass
             pyglet.image.get_buffer_manager().get_color_buffer().save('video/background.png')
         pyglet.gl.glClearColor(0, 0, 0, 0)
-        image = pyglet.image.load("video/background.png")
-        sprite = pyglet.sprite.Sprite(image, 0, 0)
-        sprite.draw()
+        try:
+            image = pyglet.image.load("video/background.png")
+            sprite = pyglet.sprite.Sprite(image, 0, 0)
+            sprite.draw()
+        except FileNotFoundError:
+            self.start = True
+            self.show_shape_optimized_new()
 
     def update(self, dt):
         if self.timestamp > self.stop:
@@ -437,10 +444,10 @@ class SpaceFree2DOpenGL(pyglet.window.Window):
                 writer.append_data(im)
             writer.close()
 
-            animation = pyglet.image.load_animation('animation.mp4')
-            self.animSprite = pyglet.sprite.Sprite(animation)
+            # animation = pyglet.image.load_animation('animation.mp4')
+            # self.animSprite = pyglet.sprite.Sprite(animation)
             self.running = False
-            #pyglet.app.exit()
+            pyglet.app.exit()
         self.clear()
         self.start = False
         if self.timestamp <= self.g.collisions[0]:

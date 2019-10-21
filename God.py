@@ -5,6 +5,8 @@ from CollisionControl import CollisionControl
 from EventQueue import EventQueue
 from Event import Event
 import Lib as lib
+from scipy import signal
+import control
 
 
 class God:
@@ -29,8 +31,9 @@ class God:
         self.controller_data = []
         dt = parameters["God"]["dt"]  # time between each data point in ms
         lib.set_dt(dt)
-        self.ts = parameters["God"]["ts"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
-        lib.set_ts(self.ts)
+        self.ct = parameters["God"]["ct"]  # time between each controller input (just for equidistant controller) in ms (WHY DO WE USE AN EXTRA VARIABLE AND NOT JUST EQUIDISTANT VALUES IN dt?)
+        lib.set_ct(self.ct)
+        lib.set_fps(parameters["SpaceFree2D"]["fps"])
         self.obstacles = []
         self.colldet = self.parameters["CollisionControl"]["activated"]
         self.collisions = [10000, 10000, 10000]
@@ -42,8 +45,9 @@ class God:
         lib.set_latency(self.latency)
         lib.set_k_d(parameters["God"]["k_d"])
         lib.set_k_p(parameters["God"]["k_p"])
-
+        lib.set_pt(parameters["God"]["pt"])
         self.eventlist_debug = []
+        self.make_statespace()
 
 
     def file_read(self):
@@ -75,7 +79,7 @@ class God:
             color = str(car["color"])
 
             car = CarFree2D(car_id, spawn_x, spawn_y, length, width, angle, max_vel, max_acc, color,
-                            self.ts)
+                            self.ct)
             self.cars.append(car)
             lib.carList.append(car)
 
@@ -99,8 +103,10 @@ class God:
             if (pos_x < 0 or pos_x > self.size[0] or pos_y < 0 or pos_y > self.size[1]):
                 raise Exception('The path of a car cannot reach outside the canvas.',car_id, pos_x, pos_y, self.size[0], self.size[1])
 
-            self.cars[car_id].set_waypoint(pos_x, pos_y)
-
+            try:
+                self.cars[car_id].set_waypoint(pos_x, pos_y)
+            except IndexError:
+                print("No car with matching ID found")
             # CHECK IF EVERY CAR HAS AT LEAST ONE DESTINATION POINT
         for car in self.cars:
             if len(car.path.points) == 1:
@@ -141,6 +147,36 @@ class God:
         lib.set_collision(CollisionControl(self))
         lib.set_carcount(len(self.cars))
 
+        # Make DC-motor
+    def make_statespace(self):
+        Jm = self.parameters["DC-Motor"]["Jm"]
+        Bm = self.parameters["DC-Motor"]["Bm"]
+        Kme = self.parameters["DC-Motor"]["Kme"]
+        Kmt = self.parameters["DC-Motor"]["Kmt"]
+        Rm = self.parameters["DC-Motor"]["Rm"]
+        Lm = self.parameters["DC-Motor"]["Lm"]
+
+        Kdm = self.parameters["DC-Motor"]["Kdm"]
+        Kpm = self.parameters["DC-Motor"]["Kpm"]
+        Kim = self.parameters["DC-Motor"]["Kim"]
+        Nm = self.parameters["DC-Motor"]["Nm"]
+
+        Ts = 0.005
+        DC = control.TransferFunction([0, Kmt], [Jm * Lm, Bm * Lm + Jm * Rm, Bm * Rm + Kme * Kmt])
+        PIDm = control.TransferFunction([Kpm + Kdm * Nm, Kpm * Nm + Kim, Kim * Nm], [1, Nm, 0])
+
+        II = control.TransferFunction([1], [1, 0, 0])
+
+        AGV = II * control.feedback(DC*PIDm, sign=-1)
+
+        #AGV = II * (PIDm * DC) / (1 + PIDm * DC)
+
+        AGVz = control.sample_system(AGV, Ts, method='zoh')
+
+        SS = control.tf2ss(AGVz)
+
+        lib.set_statespace(SS)
+
     # OLD - not used anymore
     def simulate_backup(self):
         # c_dt... time between each controller input in ms
@@ -156,14 +192,14 @@ class God:
 
         for i in range(0, n + 1):
             for car in self.cars:
-                self.calculation.append(car.status(i * lib.dt / 1000))
+                self.calculation.append(car.status(i * lib.dt))
             if coll.check_for_collision() is False:
                 print("Collision occourred . . . Aborting")
                 break
 
         for dat in self.simulation:
             data = dat[:]
-            data[1] = ceil(data[1] / (self.ts / 1000)) * (self.ts / 1000)
+            data[1] = ceil(data[1] / (self.ct / 1000)) * (self.ct / 1000)
             if not data[-1]:
                 if len(self.controller_data) <= len(self.cars):
                     for i in range(2, len(data) - 2):

@@ -1,0 +1,180 @@
+{
+  "God":
+    {
+      "size": [30, 20],
+      "dt": 0.005,
+      "dt_comment": "data sampling rate",
+      "ct": 0.005,
+      "ts_comment": "controller sampling rate",
+      "pt": 0.005,
+      "pt_comment": "PathPlanner sampling rate",
+      "latency": 0.02,
+      "k_p": -0.5,
+      "k_d": -0.2
+    },
+  "SpaceFree2D":
+    {
+      "px_width": 800,
+      "fps": 50
+    },
+  "DC-Motor":
+  {
+    "Jm": 0.03,
+    "Bm": 0.1,
+    "Kme": 0.01,
+    "Kmt": 0.01,
+    "Rm": 1,
+    "Lm": 0.5,
+    "Kdm": 20,
+    "Kpm": 170,
+    "Kim": 330,
+    "Nm": 83
+  },
+  "Cars":
+    [
+      {
+        "index": 0,
+        "spawn_x": 5.0,
+        "spawn_y": 5.0,
+        "angle": 0.787,
+        "length": 1,
+        "width": 0.5,
+        "max_vel": 4,
+        "max_acc": 2,
+        "color": "#FFAF00"
+      }
+    ],
+  "Path":
+          [
+            {
+              "car_id": 0,
+              "pos_x": 10.0,
+              "pos_y": 10.0
+            },
+            {
+              "car_id": 2,
+              "pos_x": 20.0,
+              "pos_y": 15.0
+            },
+            {
+              "car_id": 0,
+              "pos_x": 25.0,
+              "pos_y": 10.0
+            },
+            {
+              "car_id": 1,
+              "pos_x": 10.0,
+              "pos_y": 15.0
+            },
+            {
+              "car_id": 2,
+              "pos_x": 25.0,
+              "pos_y": 4.0
+            },
+            {
+              "car_id": 0,
+              "pos_x": 20.0,
+              "pos_y": 15.0
+            },
+            {
+              "car_id": 1,
+              "pos_x": 20.0,
+              "pos_y": 18.0
+            },
+            {
+              "car_id": 0,
+              "pos_x": 15.0,
+              "pos_y": 15.0
+            },
+            {
+              "car_id": 1,
+              "pos_x": 20.0,
+              "pos_y": 10.0
+            },
+            {
+              "car_id": 2,
+              "pos_x": 25.0,
+              "pos_y": 5.0
+            },
+            {
+              "car_id": 3,
+              "pos_x": 11.25,
+              "pos_y": 5
+            },
+            {
+              "car_id": 3,
+              "pos_x": 17.5,
+              "pos_y": 10
+            },
+            {
+              "car_id": 3,
+              "pos_x": 23.75,
+              "pos_y": 15
+            },
+            {
+              "car_id": 3,
+              "pos_x": 30,
+              "pos_y": 10
+            },
+            {
+              "car_id": 3,
+              "pos_x": 23.75,
+              "pos_y": 5
+            },
+            {
+              "car_id": 3,
+              "pos_x": 17.5,
+              "pos_y": 10
+            },
+            {
+              "car_id": 3,
+              "pos_x": 11.25,
+              "pos_y": 15
+            },
+            {
+              "car_id": 3,
+              "pos_x": 5,
+              "pos_y": 10
+            },
+            {
+              "car_id": 3,
+              "pos_x": 11.25,
+              "pos_y": 5
+            },
+            {
+              "car_id": 3,
+              "pos_x": 17.5,
+              "pos_y": 10
+            }
+          ],
+  "Obstacles":
+    [
+      {
+        "corners": [10, 15, 12, 15, 12, 17, 10, 17],
+        "color": "red"
+      },
+      {
+        "corners": [15, 15, 17, 15, 17, 17, 15, 17],
+        "color": "red"
+      },
+      {
+        "corners": [20, 15, 22, 15, 22, 17, 20, 17],
+        "color": "red"
+      }
+    ],
+  "Channel":
+  {
+    "latency": 20,
+    "min_latency": 15,
+    "max_latency": 55,
+    "error_probability": 0.5
+  },
+  "CollisionControl":
+  {
+    "activated": false,
+    "obstacle_spacing": 0.1,
+    "car_spacing": 0.5,
+    "polling_dif": 0.001,
+    "collision_detection_frequency": 0.2
+  }
+}
